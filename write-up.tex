@@ -1,0 +1,78 @@
+\documentclass{article}
+\usepackage{amssymb,amsmath,indentfirst}
+\newcommand{\entities}{E}
+\newcommand{\roles}{Q} 
+\newcommand{\role}{q}
+\newcommand{\Tv}{T}
+\newcommand{\tv}{t}
+\newcommand{\sent}{s}
+\newcommand{\weight}{\mathbf{w}}
+\newcommand{\rendering}{\rho}
+\newcommand{\renderings}{P}
+\newcommand{\trans}{r}
+\newcommand{\obj}{f}
+\begin{document}
+\section{Introduction}
+Auotmatic coherence assesment has typically examined the effect of local discourse features on creating coherence. These features are typically sentence-to-sentence transitions of entities, discourse relations, or other sentential information. 
+Additionally, this task is often framed as selecting the most coherent ordering of a set of sentences in a document, where the original ordering as written by a human is assumed to be the most coherent ordering.\\\\
+\section{Entity Grid Model}
+The Entity Grid model is a popular local coherence model where a document rendering is represented by a grid of discourse entities and their syntactic role in each sentence. A document rendering $\rendering$ is an ordered sequence of sentences $\sent_1, \cdots, \sent_n$.
+The possible set of renderings $\renderings$ consists of all permutations of these sentences and has $n!$ elements.\\\\ 
+\indent We formally define the Entity Grid model as a document's entity set $\entities$, a finite set of syntactic roles $\roles$, and the set of transition vectors $\tv_i$  $ \forall i \in \{ 2, 3, \cdots, |\rendering|\}$. 
+A sentence $\sent$ is a vector of length $|\entities|$ with elements $\role \in \roles$.
+The $j^{\textrm{th}}$ element of $\sent_i$ corresponds to the sytnactic role $\role_{i,j}$ of entity $e_j$ in sentence $i$.
+A transition vector $\tv_i \in \{\roles\times\roles\}^{|\entities|}$ is a vector of entity role transitions from $\sent_{i-1}$ to $\sent_i$ where each element corresponds to a transition   $\trans \in \{\roles\times\roles\}$.
+\\\\
+\indent A rendering $\rendering$ is then represented as a vector $\boldsymbol{\phi}$ of probabilities for each transition $\trans$ in the document where each element $\phi(r)$ is defined as  
+\begin{equation}
+\phi(\trans) = \frac{\sum_{i \in 2,\cdots, n}\sum_{j\in1,\cdots,|\entities|} I(\tv_{i,j}= r)  }{|\entities|(n-1)}. 
+\end{equation}
+Given a vector of weights $\mathbf{w} \in \mathbb{R}^{|\roles\times\roles|}$, we define our objective function $\obj : \mathbb{R}^{|\roles\times\roles|}  \rightarrow \mathbb{R}$ where $\obj(\boldsymbol{\phi};\weight) = \weight\cdot\boldsymbol{\phi}$. 
+The sentence ordering task can further be defined as finding the rendering that maximizes this function, or
+\begin{equation}
+\max_{\rendering \in \renderings} \obj(\boldsymbol{\phi}_\rendering ; \weight )
+\end{equation}
+\\
+Solving this problem for larger documents is intractable as the time complexity of $\obj = O(|\renderings||\roles|^2) = O(n!|\roles|^2)$.
+\section{TSP Formulation}
+We formulate this problem as a Traveling Salesperson Problem where each sentence $\sent$ is a vertex in a fully connected graph. 
+Adding an edge $(\sent_i,\sent_j)$ to the solution path represents selecting $\sent_j$ as the next sentence in the document rendering. 
+Edge weights are determined by the function
+\begin{equation}
+g(\boldsymbol{\phi}^{(-Z)}_\tv;\weight) = \weight\cdot \boldsymbol{\phi}^{(-Z)}_\tv = \sum^{|\roles|^2}_{i=1} w_i \Big( \sum_{j\in1,\cdots,|\entities|} I(\tv_{j}= r_i) \Big)
+\end{equation}
+where $\tv$ is the transition vector obtained from the rendering $<\sent_i,\sent_j>$ and $\boldsymbol{\phi}^{(-Z)}$ is the unnormalized version of the probability vector representation from the Entity Grid model.\\\\
+Under this formulation, optimal path is equivalent to the solution to the optimal rendering in the Entity Grid formulation. 
+The total edge weights for the optimal path is the sum of $g(\tv)$ for all $\tv$ in the path.
+\begin{equation*}
+\begin{split}
+\textrm{Optimal Path Edge Weight} &= \sum^\rendering_{t} g(\boldsymbol{\phi}^{(-Z)}_\tv;\weight)\\
+& = \sum^\rendering_{t} \sum^{|\roles|^2}_{i=1} w_i \Big( \sum_{j\in1,\cdots,|\entities|} I(\tv_{j}= r_i) \Big)\\
+& = \sum^{|\roles|^2}_{i=1} w_i \Big( \sum^\rendering_{t} \sum_{j\in1,\cdots,|\entities|} I(\tv_{j}= r_i) \Big)\\
+\end{split}
+\end{equation*}
+Equivalently the max of the Entity Model objective function is
+\begin{equation*}
+\begin{split}
+\operatorname{arg} \max_{\rendering \in \renderings} \obj(\boldsymbol{\phi}_\rendering ; \weight ) & =\operatorname{arg} \max_{\rendering \in \renderings}\sum^{|\roles|^2}_{i=1} w_i \Big( \frac{\sum_{\tv}^\rendering\sum_{j\in1,\cdots,|\entities|} I(\tv_{j}= r)  }{|\entities|(n-1)}   \Big)\\
+& =\operatorname{arg} \max_{\rendering \in \renderings}\sum^{|\roles|^2}_{i=1} w_i \Big( \sum_{\tv}^\rendering\sum_{j\in1,\cdots,|\entities|} I(\tv_{j}= r)     \Big)\\
+\end{split}
+\end{equation*} 
+\\
+\\
+\\
+Let $\entities$ be the set of entities in a document.
+Let $\roles$ be the set of possible roles an entity can have.\\
+Let $\roles^2$ be the set of transitions.\\
+$\trans_i \in \{1,\cdots, |\roles|^2\}^{|\entities|}$\\
+$\sent_i \in \roles^{|\entities|}\;\forall i \in \{1,\cdots, n\}$ where $n$ is the length of the document.\\
+$\sent_{i-1} = [-,-,\times,-]$\\ 
+$\sent_{i} = [s,-,o,\times]$\\
+$\trans_i = [(-,\times),(-,-),(\times,\times),(-,\times)]$\\ 
+$\forall r \in |\roles|^2$, 
+$\weight \in \mathbb{R}^{|\roles|^2}$
+$f(\trans;\weight) = \weight \cdot \phi(\trans)$\\
+$\max_{\trans \in \Tv} f(\trans ; \weight )$\\Y
+Solving this is $O(M\roles^2) \Rightarrow O(n!\roles^2)$
+\end{document}
+
