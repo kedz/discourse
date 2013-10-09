@@ -155,7 +155,7 @@ def main():
     total = 0
 
     # Total number of sentence inversions for all predicted documents.
-    totalinversions = 0
+    total_kendalls_tau = 0
 
     # While there are more documents to check, evaluate prediction.
     while goldorder is not None and predictedorder is not None:
@@ -179,6 +179,7 @@ def main():
         # Increment correct count if ordering is correct.
         if correct is True:
             numcorrect += 1
+            total_kendalls_tau += 1
         # Otherwise, count the number of inverted sentence
         # orderings in the bad prediction.
         else:
@@ -191,25 +192,26 @@ def main():
             p_indices = [smap[predictedorder[i]]
                          for i in range(len(predictedorder))]
 
-            # Count the number of inversions and add to the total count.
-            totalinversions += countInversions(p_indices)
+            # Calculate Kendall's Tau.
+            normalization = len(goldorder) * (len(goldorder) - 1) / float(2)
+            tau = 1 - (2 * countInversions(p_indices)) / float(normalization)
+            total_kendalls_tau += tau
 
         # Grab the next gold and predicted ordering.
         goldorder = readNextGoldOrdering(gold_in)
         predictedorder = readNextOrdering(pred_in)
 
     # Display the results.
-    avginversions = 0
     accuracy = 1
 
     if total > 0:
-        avginversions = totalinversions / float(total)
+        avg_kendalls_tau = total_kendalls_tau / float(total)
         accuracy = numcorrect / float(total)
 
     print "Total documents: {}".format(total)
     print "Total correct: {}".format(numcorrect)
     print "Accuracy: {}".format(accuracy)
-    print "Avg. Inversions {}".format(avginversions)
+    print "Avg. Kendall's Tau {}".format(avg_kendalls_tau)
 
 if __name__ == '__main__':
     main()
