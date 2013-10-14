@@ -24,41 +24,9 @@ def generate_transitions(role_set, path_size):
     return sorted(trans)
 
 
-class EntityGridFactory:
-
-    def __init__(self, coref=False, syntax=False,
-                 salience=False, tsize=3, normalized=True):
-        """Factory class for constructing EntityGrids."""
-
-        # Use coreference flag - currently this does nothing.
-        self.coref = coref
-
-        # Use syntax - when true use the role set (s,o,x,-), else use (x,-).
-        self.syntax = syntax
-
-        # Use salience - split entities into two categories:
-        # salient and non salient, by frequency.
-        # Transition set then becomes the cartesian product
-        # of {salient,nonsalient} x {s,o,x,-}^tsize.
-        self.salience = salience
-
-        # The size of the transitions - when tsize is 3 and syntax=False,
-        # the transitions are {---,--x,-x-,x--,-xx,xx-,x-x,xxx}.
-        self.tsize = tsize
-
-        # When true, the feature vector representation is normalized by the
-        # total number of transitions in the document.
-        self.normalized = normalized
-
-        # Initialize the transition set
-        if self.syntax is True:
-            self.trans = generate_transitions(('-', 'x', 's', 'o'), self.tsize)
-        else:
-            self.trans = generate_transitions(('-', 'x'), self.tsize)
-
-    def buildEntityGrid(self, cmat):
-        """Turn a numpy matrix or chararray of
-            entity role transitions into an EntityGrid."""
+def new_entity_grid(cmat, coref=False, syntax=False, salience=False, tsize=2):
+        """Construct a new EntityGrid from a matrix or chararray of
+            entity role transitions."""
 
         # cmat is a numpy matrix or 2d chararry of representing
         # an entity's role in a sentence.
@@ -67,21 +35,43 @@ class EntityGridFactory:
         # e.g. an EntityGrid with 3 entities and 2 sentences:
         #     [['x','-','s'],
         #     ['o','s','x']]
+        #
+        # When syntax is true, use the role set (s,o,x,-), else use (x,-).
+        #
+        # When salience is true, split entities into two categories:
+        # salient and non salient, by frequency.
+        # Transition set then becomes the cartesian product
+        # of {salient,nonsalient} x {s,o,x,-}^tsize.
+        #
+        # tsize is the size of the transitions.
+        # When tsize is 3 and syntax=False,
+        # the transitions are {---,--x,-x-,x--,-xx,xx-,x-x,xxx}.
 
-        return EntityGrid(cmat, self.trans, self.tsize,
-                          self.salience, self.normalized)
+        # Initialize the transition set
+        if syntax is True:
+            trans = generate_transitions(('-', 'x', 's', 'o'), tsize)
+        else:
+            trans = generate_transitions(('-', 'x'), tsize)
+
+        return EntityGrid(cmat, trans, tsize, salience)
 
 
 class EntityGrid:
 
     def __init__(self, trans_mat, trans,
-                 maxTrans=2, salience=False, normalized=True):
+                 tsize=2, salience=False):
         """An EntityGrid computes the transition count
             vector representation of a document."""
 
         # Count maps for transistions -- the first index is for non salient
         # entities, and the second for salient ones.
         self.trans_cnts = [defaultdict(int), defaultdict(int)]
+
+        # Store set of possible transitions.
+        self.trans = trans
+
+        # Boolean flag to turn salience on or off.
+        self.salience = salience
 
         # Total number of transitions for salient and non salient entities.
         self.num_trans = [0, 0]
@@ -90,12 +80,12 @@ class EntityGrid:
         self.trans_mat = trans_mat
 
         # Count up all the transitions.
-        self._count_transitions(trans, maxTrans, salience)
+        self._count_transitions(trans, tsize, salience)
 
         # Create the feature vector
-        self._build_vector_rep(trans, salience, normalized)
+        #self._build_vector_rep(trans, salience, normalized)
 
-    def _count_transitions(self, transSet, maxTrans, salience):
+    def _count_transitions(self, transSet, tsize, salience):
         """Counts the transitions that occur in this document.
             There are possibly two classes of transition: salient
             and nonsalient."""
@@ -119,7 +109,7 @@ class EntityGrid:
             for r in range(self.trans_mat.shape[0]-1):
                 trans = self.trans_mat[r, c]
                 i = r+1
-                while len(trans) < maxTrans and i < self.trans_mat.shape[0]:
+                while len(trans) < tsize and i < self.trans_mat.shape[0]:
                     trans += self.trans_mat[i, c]
                     if trans in transSet:
                         sal = 0
@@ -136,21 +126,47 @@ class EntityGrid:
 
         # If salience is used, there are twice as many features.
         if salience:
-            self.tpv = np.zeros((len(trans)*2, 1))
+            v = np.zeros((len(trans)*2, 1))
         else:
-            self.tpv = np.zeros((len(trans), 1))
+            v = np.zeros((len(trans), 1))
 
-        # Get the feature value of each transition and place it in self.tpv
+        # Get the feature value of each transition and place it in v.
         for t in range(len(trans)):
 
             if trans[t] in self.trans_cnts[0]:
                 if self.num_trans[0] > 0:
-                    self.tpv[t] = self.trans_cnts[0][trans[t]]
+                    v[t] = self.trans_cnts[0][trans[t]]
                     if normalized:
-                        self.tpv[t] /= float(self.num_trans[0])
+                        v[t] /= float(self.num_trans[0])
 
             if salience:
                 if self.num_trans[1] > 0:
-                    self.tpv[t+len(trans)] = self.trans_cnts[1][trans[t]]
+                    v[t+len(trans)] = self.trans_cnts[1][trans[t]]
                 if normalized:
-                    self.tpv[t+len(trans)] /= float(self.num_trans[1])
+                    v[t+len(trans)] /= float(self.num_trans[1])
+
+        # If normalized,
+        # cache this vector as a tpv (transition probability vector).
+        if normalized is True:
+            self._tpv = v
+            return v
+        # Otherwise cache this vector as a tcv (transition count vector).
+        else:
+            self._tcv = v
+            return v
+
+    def get_trans_cnt_vctr(self):
+        """Get a vector of entity transition counts."""
+
+        try:
+            return self._tcv
+        except:
+            return self._build_vector_rep(self.trans, self.salience, False)
+
+    def get_trans_prob_vctr(self):
+        """Get a vector of entity transition probabilities."""
+
+        try:
+            return self._tpv
+        except:
+            return self._build_vector_rep(self.trans, self.salience, True)
