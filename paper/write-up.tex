@@ -26,12 +26,33 @@
 \newcommand{\edgeTot}{\boldsymbol{\psi}}
 
 \begin{document}
+
+
 \section{Introduction}
+
+
 Automatic coherence assessment has typically examined the effect of local discourse features on coherence. These features are typically sentence-to-sentence transitions of entities, discourse relations, or other sentential information. 
-Additionally, this task is often framed as selecting the most coherent ordering of a set of sentences in a document, where the original ordering as written by a human is assumed to be the most coherent ordering.\\\\
+Additionally, this task is often framed as selecting the most coherent ordering of a set of sentences in a document, where the original ordering as written by a human is assumed to be the most coherent ordering.
 
 
-\todo[inline]{related work}
+\section{Related Work}
+
+
+Local coherence has been strongly influenced by Centering Theory \cite{grosz1995centering}, which places constraints on discourse entities and their transitions between text units.
+Moreover, it establishes the importance of entity salience, and syntactic role for local coherence. 
+While not directly implementing these constraints, \cite{barzilay2005modeling} uses discourse entities in formulating an \textit{entity grid} model for learning sentence-to-sentence transition features that contribute to document coherence. 
+Additionally, \cite{barzilay2005modeling} establish the sentence ordering task such that training data can be generated in an unsupervised fashion.   
+The entity grid model, and its variants, have remained popular in the discourse coherence literature, as various authors have tried to augment it with global features \cite{elsner2007unified}, more direct coreference features \cite{elsner2008coreference}, discourse connectives \cite{lin2011automatically}, and syntax patterns \cite{louis2012coherence}.  
+
+
+Few authors have dealt directly with the issues of intractability. 
+\cite{althaus2004computing} prove the sentence ordering task is an NP complete problem by showing its reducibility to a traveling salesperson problem. 
+\cite{soricut2006discourse} uses an IDL (Interleave-Disjunction-Lock) graph formalism to compactly represent the search space of sentence-to-sentence transitions in the ordering problem, and experiment with A* and beam search algorithms for learning/decoding.                    
+The IDL formalism allows for a complex scoring for sentence to sentence transitions, while using an admissible heuristic to prevent \textit{unfolding} unnecessary search states. 
+Unfortunately, their implementation exhibits run times of over a minute for problems of only eleven sentences, indicating this approach may not scale for some applications.
+\todo[inline]{Put sauper and barzilay 2009 in here for topic level discourse ordering and ILP solver implementation.}
+
+
 
 \section{Entity Grid Model}
 
@@ -54,7 +75,7 @@ A role transition is simply a column subsequence of any length. For example, in 
 \label{tab:egrid}
 \end{table}
 
-Let a document $d$ be an undordered set of $n$ sentences. 
+Let a document $d$ be an unordered set of $n$ sentences. 
 We define the set $\entities = \{e_1,e_2,\ldots,e_{|\entities|}\}$ to be the set of $|\entities|$ entities that occur in $d$ and the set $\roles$ to be a finite set of syntactic roles. 
 We also define the set of document renderings $\Rend = \{\rend_1,\rend_2,\ldots, \rend_{n!} \}$ to be the set of ordered permutations of these sentences. 
 A document rendering $\rend_i = \{\sent_{i,j} : 1 \le j \le n \}$ is an ordered sequence of sentences where a sentence is a vector $\sent_{i,j} = \{\role_{i,j,\ent_k} : 1\le k \le |\entities| \}$ of syntactic roles.
@@ -126,37 +147,8 @@ Equivalently the $\argmax$ of the Entity Model objective function is
 \todo{give an example. NetworkX}
 
 
-\commentout{
-of probabilities for each transition $\trans$ in the document where each element $\phi(r)$ is defined as  
-
-The sentence $\sent_{i,j} = \{ \role_{i,j,\ent_1}, \role_{i,j,\ent_2},\ldots,\role_{i,j,\ent_{|\entities|}} \}$. 
-The syntanctic role $r_{i,j,e_k}$ is the syntactic role of the $k^{\textrm{th}}$ entity in $\sent_{i,j}$.
-
-
-The sentence $s_{i,j}$ is the $j^{\textrm{th}}$ sentence of document rendering $\rend_i$ for all $j$, $1 \le j \le n$.
-
-
-A document rendering $\rend$ is an ordered sequence of sentences $\sent_1, \ldots, \sent_n$.
-The possible set of renderings $\Rend$ consists of all permutations of these sentences and has $n!$ elements.
-
-A sentence $\sent$ is a vector of length $|\entities|$ with elements $\role \in \roles$.
-The $j^{\textrm{th}}$ element of $\sent_i$ corresponds to the sytnactic role $\role_{i,j}$ of entity $e_j$ in sentence $i$.
-Ignore this junk\\
-Let $\entities$ be the set of entities in a document.
-Let $\roles$ be the set of possible roles an entity can have.\\
-Let $\roles^2$ be the set of transitions.\\
-$\trans_i \in \{1,\ldots, |\roles|^2\}^{|\entities|}$\\
-$\sent_i \in \roles^{|\entities|}\;\forall i \in \{1,\ldots, n\}$ where $n$ is the length of the document.\\
-$\sent_{i-1} = [-,-,\times,-]$\\ 
-$\sent_{i} = [s,-,o,\times]$\\
-$\trans_i = [(-,\times),(-,-),(\times,\times),(-,\times)]$\\ 
-$\forall r \in |\roles|^2$, 
-$\weight \in \mathbb{R}^{|\roles|^2}$
-$f(\trans;\weight) = \weight \cdot \phi(\trans)$\\
-$\max_{\trans \in \Tv} f(\trans ; \weight )$\\Y
-Solving this is $O(M\roles^2) \Rightarrow O(n!\roles^2)$
-}
-
+\bibliographystyle{plain}
+\bibliography{write-up}
 \end{document}
 
 %%% Local Variables: 
