@@ -135,13 +135,13 @@ class EntityGrid:
             v = np.zeros((len(trans), 1))
 
         # Get the feature value of each transition and place it in v.
-        for t in range(len(trans)):
+        for i, t in enumerate(trans):
 
-            if trans[t] in self.trans_cnts[0]:
+            if trans[i] in self.trans_cnts[0]:
                 if self.num_trans[0] > 0:
-                    v[t] = self.trans_cnts[0][trans[t]]
+                    v[i] = self.trans_cnts[0][t]
                     if normalized:
-                        v[t] /= float(self.num_trans[0])
+                        v[i] /= float(self.num_trans[0])
 
             if salience:
                 if self.num_trans[1] > 0:
@@ -151,7 +151,7 @@ class EntityGrid:
 
         # If normalized,
         # cache this vector as a tpv (transition probability vector).
-        if normalized is True:
+        if normalized:
             self._tpv = v
             return v
         # Otherwise cache this vector as a tcv (transition count vector).
