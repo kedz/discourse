@@ -130,6 +130,8 @@ def main():
 
     # Parse commandline arguments.
     parser = argparse.ArgumentParser(prog='ordering-eval', add_help=True)
+    parser.add_argument('-m', action='store_true', help='Print in machine readable format: '
+                        + 'tot_docs num_correct accuracy avg_k_tau')
     parser.add_argument('--gold', nargs=1, type=argparse.FileType('r'),
                         required=True,
                         help='File with gold sentence orderings, '
@@ -208,10 +210,15 @@ def main():
         avg_kendalls_tau = total_kendalls_tau / float(total)
         accuracy = numcorrect / float(total)
 
-    print "Total documents: {}".format(total)
-    print "Total correct: {}".format(numcorrect)
-    print "Accuracy: {}".format(accuracy)
-    print "Avg. Kendall's Tau {}".format(avg_kendalls_tau)
+    if args.m:
+
+        print "{} {} {} {}".format(total, numcorrect, accuracy, avg_kendalls_tau)
+
+    else:
+        print "Total documents: {}".format(total)
+        print "Total correct: {}".format(numcorrect)
+        print "Accuracy: {}".format(accuracy)
+        print "Avg. Kendall's Tau {}".format(avg_kendalls_tau)
 
 if __name__ == '__main__':
     main()
