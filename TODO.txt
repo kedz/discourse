@@ -14,3 +14,58 @@ TO DO
 6. Implement graph in PyDecode - IN PROGESS
 
 7. Read Soricut and Marcu, 2006, "Discourse Generation Using Utility-Trained Coherence"
+
+
+Week of Oct 29th.
+
+builder is being deprecated
+hypergraph builder as single function - see examples in documentation
+
+
+Within the scope of weeks:
+
+Model 0
+replicate barzilay with modern coref
+use svm rank
+oracle expirment
+20 random perms
+
+SHOULD BE SLIGHTLY BETTER
+
+
+Model 1
+
+run oracle coref
+ilp solve for highest scoring entity grid
+use weights from svmrank
+
+Model 2
+
+replace svm rank with structured trainer
+  train weights by runnin ilp over training data
+  
+possibly too slow, use lp or prune space
+pruning example 
+features in dict format
+factored edges
+
+Before Model 3
+
+Write up experiment section for models 0-2
+tables and stuff :)
+
+
+Model 3
+
+
+Question on coref - train on external data or our ordering data (indirectly)
+Maybe we can use Berekeley system weights
+Train some adjustment parameters
+
+How to embed coref in coherence?
+
+add new features to edges based on berkeley coref paper
+small subset of those features (essentialy 
+
+
+
