@@ -1,9 +1,10 @@
-from os import getenv, remove
+from os import getenv, remove, listdir
 from os.path import join
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 from tempfile import NamedTemporaryFile
 from subprocess import check_output
 import pandas as pd
+import re
 
 # Location of training and test for apws and ntsb corpora.
 _DATA_DIR = getenv("DISCOURSEDATA", ".")
@@ -14,6 +15,94 @@ _COHERENCE_BIN = getenv("BROWNCOHERENCEPATH", ".")
 # Command used to generate entity grid.
 _TEST_GRID_CMD = join(_COHERENCE_BIN, "TestGrid")
 
+# Directories of xml output of stanford corenlp for test and training data.
+_XML_NTSB_TRAIN = join(_DATA_DIR, "xml", "train", "ntsb")
+_XML_NTSB_TEST = join(_DATA_DIR, "xml", "test", "ntsb")
+_XML_APWS_TRAIN = join(_DATA_DIR, "xml", "train", "apws")
+_XML_APWS_TEST = join(_DATA_DIR, "xml", "test", "apws")
+
+# Gold pretty sentence ordering files.
+_GOLD_NTSB_ORDERINGS = join(_DATA_DIR, "ntsb.gold.txt")
+_GOLD_APWS_ORDERINGS = join(_DATA_DIR, "apws.gold.txt")
+
+# Directories with Regina's original grids.
+_BARZILAY_GRIDS_APWS_TRAIN = join(_DATA_DIR,
+                                  "barzilay", "grids", "train", "apws")
+_BARZILAY_GRIDS_APWS_TEST = join(_DATA_DIR,
+                                 "barzilay", "grids", "test", "apws")
+_BARZILAY_GRIDS_NTSB_TRAIN = join(_DATA_DIR,
+                                  "barzilay", "grids", "train", "ntsb")
+_BARZILAY_GRIDS_NTSB_TEST = join(_DATA_DIR,
+                                 "barzilay", "grids", "test", "ntsb")
+
+
+def gold_ntsb_file():
+    return _GOLD_NTSB_ORDERINGS
+
+
+def gold_apws_file():
+    return _GOLD_APWS_ORDERINGS
+
+
+def corenlp_ntsb_train():
+    return _xml_file_generator(_XML_NTSB_TRAIN)
+
+
+def corenlp_ntsb_test():
+    return _xml_file_generator(_XML_NTSB_TEST)
+
+
+def corenlp_apws_train():
+    return _xml_file_generator(_XML_APWS_TRAIN)
+
+
+def corenlp_apws_test():
+    return _xml_file_generator(_XML_APWS_TEST)
+
+
+def _xml_file_generator(xml_dir):
+
+    for f in sorted(listdir(xml_dir)):
+        yield join(xml_dir, f)
+
+
+def apws_barzilay_grids_train():
+    return _grid_dataframe_generator(_BARZILAY_GRIDS_APWS_TRAIN)
+
+
+def apws_barzilay_grids_test():
+    return _grid_dataframe_generator(_BARZILAY_GRIDS_APWS_TEST)
+
+
+def ntsb_barzilay_grids_train():
+    return _grid_dataframe_generator(_BARZILAY_GRIDS_NTSB_TRAIN)
+
+
+def ntsb_barzilay_grids_test():
+    return _grid_dataframe_generator(_BARZILAY_GRIDS_NTSB_TEST)
+
+
+def _grid_dataframe_generator(data_dir):
+    """Yield tuples of
+        (grid_file, list_of_permuted_grid_files)."""
+    inst_map = defaultdict(dict)
+
+    pattern = re.compile('(.*)perm-(\d+)-')
+
+    for f in listdir(data_dir):
+        filename = join(data_dir, f)
+        m = pattern.search(filename)
+        if m:
+            inst_map[m.groups()[0]][m.groups()[1]] = filename
+    keys = [k for k in inst_map]
+    keys = sorted(keys)
+
+    for key in keys:
+        original_file = inst_map[key]['1']
+
+        del inst_map[key]['1']
+        yield (original_file, inst_map[key].values())
+
 
 class CoherenceInstance(namedtuple("CoherenceInstance",
                         ["parses", "dataframe"])):
@@ -23,42 +112,6 @@ class CoherenceInstance(namedtuple("CoherenceInstance",
 
     def __str__(self):
         return "CoherenceInstance:\n{}\n{}".format(self.parses, self.dataframe)
-
-
-def _parse_grid_string(grid_str):
-    """Parses stdout of TestGrid from the Brown Coherence Toolkit into
-        a pandas DataFrame."""
-
-    lines = grid_str.strip().split("\n")
-
-    # A list of lists holding entity transitions.
-    # This will become the data in a pandas
-    # DataFrame representing the entity grid.
-    egrid = []
-
-    # A list of entities in this document.
-    # This will become the index of a pandas
-    # DataFrame representing the entity grid.
-    entities = []
-
-    for line in lines:
-
-        if (line.strip() is not ""):
-
-            # Each entry is separated by a space.
-            roles = line.strip().split(" ")
-
-            # The first entry is the entity name. Add this to the index.
-            entities.append(roles[0].decode("ascii", "ignore"))
-
-            # Add the transitions (these start at index 1)
-            # for this entity to egrid.
-            roles = [roles[t].lower() for t in range(1, len(roles))]
-            egrid.append(roles)
-
-    egrid_df = pd.DataFrame(egrid, index=entities)
-
-    return egrid_df
 
 
 def ntsb_train():
