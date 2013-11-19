@@ -160,3 +160,14 @@ def permute_model(model, num_perms):
 
     # Return the set of permuted entity grid models.
     return pmodels
+
+
+class PerceptronTrainer:
+    def __init__(self, model):
+        self.model = model;
+        #self._build_graph(model)
+
+    #def _build_graph(self, model):
+
+
+

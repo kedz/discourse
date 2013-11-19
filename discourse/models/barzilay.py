@@ -31,7 +31,7 @@ _relation_map['nn'] = ('dependent', '-')
 _relation_map['dep'] = ('dependent', 'X')
 
 
-def new_barzilay_model(f):
+def new_barzilay_model(f, max_salience=2, history=2):
     """Parses file handle to the xml output of the Stanford CoreNLP
         library and creates an EntityGrid in the style of Barzilay
         and Lapata, 2005."""
@@ -58,7 +58,7 @@ def new_barzilay_model(f):
                  for tree in parses]
 
     return eg.new_entity_grid(grid_df, syntax=True,
-                              max_salience=2, history=2,
+                              max_salience=max_salience, history=history,
                               sentences=sentences)
 
 

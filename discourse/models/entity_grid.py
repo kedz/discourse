@@ -268,6 +268,34 @@ class EntityGrid:
             self._tcv_df = v_df
             self._tcv = v
 
+    def get_partial_grid(self, indices):
+        """Return another entity grid model with all parameters
+            the same but constructing a new entity grid from
+            an ordered list of indices. N.B.: Indices start at 1!"""
+
+        # Get new entity grids - preserving salience levels.
+        new_grids = [grid[indices] for grid in self.grids]
+        # Retrieve sentence permutation
+        new_sentences = []
+        for i in indices:
+            new_sentences.append(self.sentences[i-1])
+
+        return EntityGrid(new_grids, self.trans, new_sentences, history=self.history)
+
+
+    def pretty_string_from_hypergraph_path(self, hypergraph, path):
+        perm = [int(hypergraph.label(p).sents[0].split('_')[1])-1
+                for p in path
+                if hypergraph.label(p).sents[0] not in ['START', 'END']]
+        sents = []
+        for p in reversed(perm):
+            sents.append(self.sentences[p])
+        
+        return "\n".join(sents)
+
+    def pretty_string(self):
+        return "\n".join(self.sentences)
+
     def get_trans_cnt_vctr(self):
         """Get a vector of entity transition counts."""
 
@@ -295,3 +323,7 @@ class EntityGrid:
         if self._tpv_df is None:
             self._build_vector_rep(self.trans, True)
         return self._tpv_df
+
+    def print_grids(self):
+        for grid in self.grids:
+            print grid

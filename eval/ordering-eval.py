@@ -1,6 +1,6 @@
 import sys
 import argparse
-
+from scipy.stats import kendalltau
 
 def readNextGoldOrdering(gold_in):
     """Reads the next gold sentence ordering and returns ordered list of tuples
@@ -141,6 +141,10 @@ def main():
                         required=True,
                         help='File with predicted sentence orderings, '
                         + 'documents separated by a blanks line.')
+    parser.add_argument('--noheadline', action='store_true',
+                        help='Evaluate without the first sentence '
+                        + 'which is often a headline or noise.')
+    
     parser._optionals.title = "arguments"
     args = parser.parse_args()
 
@@ -171,6 +175,12 @@ def main():
             print "Sentence pair {} is misaligned.".format(total)
             sys.exit()
 
+        # Evaluate without first sentence which is often a headline/noise.
+        if args.noheadline:
+            predictedorder.remove(goldorder[0][1])
+            goldorder.pop(0)
+        
+        
         # Iterate through each gold sentence and predicted
         # sentence in gold order. If they are ever different,
         # mark this prediction as incorrect.
@@ -195,10 +205,16 @@ def main():
             p_indices = [smap[predictedorder[i]]
                          for i in range(len(predictedorder))]
 
+            scipytau, _ = kendalltau(p_indices, [i for i, _ in enumerate(p_indices, 1)])
+            #ktau, pval = kendalltau(x,y)
+            #        print ktau
+            #            avg_ktau += ktau
             # Calculate Kendall's Tau.
             normalization = len(goldorder) * (len(goldorder) - 1) / float(2)
             tau = 1 - (2 * countInversions(p_indices)) / float(normalization)
             total_kendalls_tau += tau
+            if abs(tau-scipytau) > .01:
+                print "My tau {} scipy tau {}".format(tau, scipytau)
 
         # Grab the next gold and predicted ordering.
         goldorder = readNextGoldOrdering(gold_in)
