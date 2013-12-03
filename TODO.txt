@@ -1,16 +1,106 @@
 TO DO
 -----
 
-1. Create ipython notebook for this project. - IN PROGRESS
+feature wishlist:
 
-2. Check in python script. - IN PROGRESS
+1 hmm topics
+2 word alignments
+3 cosine similarity/some similarity
+4 discourse new/discoures continuation
+5 discourse relations
+6 narrative chains (Chambers)
 
-3. Implement eval script. - DONE
+similar word classes
+role same as next role
+entity match
 
-4. Address comments in writeup. - DONE
+1. is the subject same as next subject
+2. is the object same as next object
+3. is the object sames next subject
+4. ....
 
-5. Add related work, example. - 
+does the gender of a pronoun match the gender of a previous
+is the pronoun refferent to the previous subject
+is the pronoun refferent to the previous object
+...
 
-6. Implement graph in PyDecode - IN PROGESS
+starts with proper noun
+starting pos tags (both sentences)
 
-7. Read Soricut and Marcu, 2006, "Discourse Generation Using Utility-Trained Coherence"
+relative length of sentences (binary features as buckets)
+
+prospective ordering
+
+number of propper nouns
+number of each ner tag category
+
+ration of proper nouns / prounouns
+
+verb used
+
+word classes
+
+time words ('prior', 'continuing'...)
+
+start/end token in entity grid
+
+start/end feature token
+
+presence of quotations
+
+elipses
+
+presence of ordinals
+
+pronoun precedes noun feature / constraint 
+
+
+Model 0
+replicate barzilay with modern coref
+use svm rank
+oracle expirment
+20 random perms
+
+SHOULD BE SLIGHTLY BETTER
+
+
+Model 1
+
+run oracle coref
+ilp solve for highest scoring entity grid
+use weights from svmrank
+
+
+
+
+
+Model 2
+
+replace svm rank with structured trainer
+  train weights by runnin ilp over training data
+  
+possibly too slow, use lp or prune space
+pruning example 
+features in dict format
+factored edges
+
+Before Model 3
+
+Write up experiment section for models 0-2
+tables and stuff :)
+
+
+Model 3
+
+
+Question on coref - train on external data or our ordering data (indirectly)
+Maybe we can use Berekeley system weights
+Train some adjustment parameters
+
+How to embed coref in coherence?
+
+add new features to edges based on berkeley coref paper
+small subset of those features (essentialy 
+
+
+
