@@ -15,7 +15,7 @@ class Sentence(namedtuple("Sentence", ["label", "prev_sents", "pos"])):
 
 class Transition:
     def __init__(self, sents):
-        self.sents = sents
+        self.sents = tuple(sents)
 
     def __str__(self):
         label = ''
@@ -23,6 +23,12 @@ class Transition:
             for sent in self.sents[1:]:
                 label = "{} -> ".format(sent) + label
         return label + "{}".format(self.sents[0])
+   
+    def __eq__(self, other):
+        return self.sents == other.sents
+   
+    def __hash__(self):
+        return hash(self.sents)
     
     def __iter__(self):
         return iter(self.sents)
@@ -79,4 +85,39 @@ def build_hypergraph(discourse_model, c):
 
     return c
 
+def recover_order(transition_set):
+    transitions = list(transition_set)
+    ordered_trans = []
+    curr_tok = 'START'
+    
+    pop_cntr = 0
+    while len(transitions) > 0:
+        t = transitions.pop(0)
+        pop_cntr += 1
+        if t[1] == curr_tok:
+            ordered_trans.append(t)
+            curr_tok = t[0]
+            pop_cntr = 0
+        else:
+            transitions.append(t)
+        if pop_cntr == len(transitions) +1:
+            print "Invalid solution"
+            for t in transition_set:
+                print t
+            print
+            return []
+            
+    slabels = [s2i(t[0]) for t in ordered_trans[:-1]] 
+    
+    
+    return slabels 
 
+def s2i(sent_label, end=None ):
+    if sent_label == 'START':
+        return -1
+    elif sent_label == 'END':
+        return end     
+    elif sent_label == ():
+        return -1000
+    else:
+        return int(sent_label[5:])
