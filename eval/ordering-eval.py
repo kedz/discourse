@@ -164,6 +164,12 @@ def main():
     # Total number of sentence inversions for all predicted documents.
     total_kendalls_tau = 0
 
+    # sum of pvals for avg
+    total_pvals = 0 
+
+    #total pairwise correct
+    pairwise_correct = 0
+
     # While there are more documents to check, evaluate prediction.
     while goldorder is not None and predictedorder is not None:
 
@@ -188,11 +194,13 @@ def main():
         for i in range(0, len(goldorder)):
             if not goldorder[i][1] == predictedorder[i]:
                 correct = False
+            
 
         # Increment correct count if ordering is correct.
         if correct is True:
             numcorrect += 1
             total_kendalls_tau += 1
+            pairwise_correct += 1
         # Otherwise, count the number of inverted sentence
         # orderings in the bad prediction.
         else:
@@ -205,16 +213,29 @@ def main():
             p_indices = [smap[predictedorder[i]]
                          for i in range(len(predictedorder))]
 
-            scipytau, _ = kendalltau(p_indices, [i for i, _ in enumerate(p_indices, 1)])
+            if len(p_indices) > 1:
+                score = 0
+                for i, idx in enumerate(p_indices[:-1]):
+                    if idx+1 == p_indices[i+1]:
+                        score += 1
+                pairwise_correct = score / (len(p_indices) - 1.0)
+            else:
+                import sys
+                print 'Can\'t order passage of size 1'
+                sys.exit()
+
+
+            scipytau, pval = kendalltau(p_indices, [i for i, _ in enumerate(p_indices, 1)])
             #ktau, pval = kendalltau(x,y)
             #        print ktau
             #            avg_ktau += ktau
             # Calculate Kendall's Tau.
             normalization = len(goldorder) * (len(goldorder) - 1) / float(2)
             tau = 1 - (2 * countInversions(p_indices)) / float(normalization)
-            total_kendalls_tau += tau
+            total_kendalls_tau += scipytau
             if abs(tau-scipytau) > .01:
                 print "My tau {} scipy tau {}".format(tau, scipytau)
+            total_pvals += pval
 
         # Grab the next gold and predicted ordering.
         goldorder = readNextGoldOrdering(gold_in)
@@ -226,17 +247,26 @@ def main():
     if total > 0:
         avg_kendalls_tau = total_kendalls_tau / float(total)
         accuracy = numcorrect / float(total)
+        avg_pval = total_pvals / float(total)
+        avg_pw_corr = pairwise_correct / float(total)
+    else:
+        import sys
+        print 'Cannot evaluate empty dataset.'
+        sys.exit()
 
     if args.m:
 
-        print "{} {} {} {}".format(total, numcorrect,
-                                   accuracy, avg_kendalls_tau)
+        print "{} {} {} {} {} {}".format(total, numcorrect,
+                                         accuracy, avg_kendalls_tau,
+                                         avg_pval, avg_pw_corr)
 
     else:
         print "Total documents: {}".format(total)
         print "Total correct: {}".format(numcorrect)
         print "Accuracy: {}".format(accuracy)
         print "Avg. Kendall's Tau {}".format(avg_kendalls_tau)
+        print "pval: {}".format(avg_pval)
+        print "pairwise correct: {}".format(avg_pw_corr)
 
 if __name__ == '__main__':
     main()
