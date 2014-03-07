@@ -1,14 +1,13 @@
 from os import getenv, remove, listdir, makedirs
-from os.path import join, isdir
+from os.path import join, isdir, exists
 from collections import namedtuple, defaultdict
 from tempfile import NamedTemporaryFile
 from subprocess import check_output
 import pandas as pd
 import re
-#from gensim.matutils import Sparse2Corpus
-#from gensim.models.lsimodel import LsiModel
-from scipy.sparse import coo_matrix
-import corenlp_xml as cnlp
+import corenlp as cnlp
+import cPickle
+import dill
 
 # Location of training and test for apws and ntsb corpora.
 _DATA_DIR = getenv("DISCOURSEDATA", ".")
@@ -39,69 +38,102 @@ _BARZILAY_GRIDS_NTSB_TRAIN = join(_DATA_DIR,
 _BARZILAY_GRIDS_NTSB_TEST = join(_DATA_DIR,
                                  "barzilay", "grids", "test", "ntsb")
 
-_RAW_TXT_APWS_TRAIN = join(_DATA_DIR,
-                           'raw',
-                           'apws',
-                           'train')
+# Raw text data locations.
+_RAW_TXT_APWS_TRAIN = join(_DATA_DIR, 'raw', 'apws', 'train')
+_RAW_TXT_APWS_TEST = join(_DATA_DIR, 'raw', 'apws', 'test')
+_RAW_TXT_NTSB_TRAIN = join(_DATA_DIR, 'raw', 'ntsb', 'train')
+_RAW_TXT_NTSB_TEST = join(_DATA_DIR, 'raw', 'ntsb', 'test')
 
-_RAW_TXT_APWS_TEST = join(_DATA_DIR,
-                           'raw',
-                           'apws',
-                           'test')
+# Serialized model directory.
+_MODEL_DIR = join(_DATA_DIR, 'models')
 
-_RAW_TXT_NTSB_TRAIN = join(_DATA_DIR,
-                           'raw',
-                           'ntsb',
-                           'train')
 
-_RAW_TXT_NTSB_TEST = join(_DATA_DIR,
-                           'raw',
-                           'ntsb',
-                           'test')
+def bigram_apws_model_names():
+    model_fnames = []
+    if exists(_MODEL_DIR):
+        for pfile in listdir(_MODEL_DIR):
+            if 'apws' in pfile:
+                model_fnames.append(pfile)
+    return model_fnames
 
+
+def get_apws_model(modelname):
+    for model in bigram_apws_model_names():
+        if 'apws_'+modelname == model:
+            modelpath = join(_MODEL_DIR, model)
+            with open(modelpath, 'rb') as f:
+                return dill.load(f)
+    import sys
+    sys.stderr.write(u'WARNING: Could not find {} at {}\n'.format(model,
+                                                                  _MODEL_DIR))
+    sys.stderr.flush()
+    return None
+
+
+def bigram_ntsb_model_names():
+    model_fnames = []
+    if exists(_MODEL_DIR):
+        for pfile in listdir(_MODEL_DIR):
+            if 'ntsb' in pfile:
+                model_fnames.append(pfile)
+    return model_fnames
+
+
+def get_ntsb_model(modelname):
+    for model in bigram_ntsb_model_names():
+        if 'ntsb_'+modelname == model:
+            modelpath = join(_MODEL_DIR, model)
+            with open(modelpath, 'rb') as f:
+                return dill.load(f)
+    import sys
+    sys.stderr.write(u'WARNING: Could not find {} at {}\n'.format(model,
+                                                                  _MODEL_DIR))
+    sys.stderr.flush()
+    return None
 
 
 def apws_train_xml_dir():
     if not isdir(_XML_APWS_TRAIN):
-        makedirs(_XML_APWS_TRAIN)    
+        makedirs(_XML_APWS_TRAIN)
     return _XML_APWS_TRAIN
+
 
 def apws_test_xml_dir():
     if not isdir(_XML_APWS_TEST):
-        makedirs(_XML_APWS_TEST)    
+        makedirs(_XML_APWS_TEST)
     return _XML_APWS_TEST
+
 
 def ntsb_train_xml_dir():
     if not isdir(_XML_NTSB_TRAIN):
-        makedirs(_XML_NTSB_TRAIN)    
+        makedirs(_XML_NTSB_TRAIN)
     return _XML_NTSB_TRAIN
+
 
 def ntsb_test_xml_dir():
     if not isdir(_XML_NTSB_TEST):
-        makedirs(_XML_NTSB_TEST)    
+        makedirs(_XML_NTSB_TEST)
     return _XML_NTSB_TEST
-
 
 
 def raw_apws_train_files():
     for f in listdir(_RAW_TXT_APWS_TRAIN):
         yield join(_RAW_TXT_APWS_TRAIN, f)
 
+
 def raw_apws_test_files():
     for f in listdir(_RAW_TXT_APWS_TEST):
         yield join(_RAW_TXT_APWS_TEST, f)
+
 
 def raw_ntsb_train_files():
     for f in listdir(_RAW_TXT_NTSB_TRAIN):
         yield join(_RAW_TXT_NTSB_TRAIN, f)
 
+
 def raw_ntsb_test_files():
     for f in listdir(_RAW_TXT_NTSB_TEST):
         yield join(_RAW_TXT_NTSB_TEST, f)
-
-
-
-
 
 
 def gold_ntsb_file():
@@ -242,47 +274,3 @@ def _instance_generator(instances_file):
         else:
             tmpFile.write(line)
             parse_list.append(line.strip())
-
-def get_ntsb_gensim(k=50):
-    return get_gensim([xml for xml in data.corenlp_ntsb_train()], k=k)
-
-def get_apws_gensim():
-    return get_gensim([xml for xml in data.corenlp_apws_train()], k=k)
-
-
-def get_gensim(xmls, k=50):
-    
-    w2i = {}
-    windex = 0
-    d = []
-    rows = []
-    cols = []
-    row = 0
-
-    for xml in xmls:
-        for s in cnlp.Document(xml):
-            counts = defaultdict(float)
-            
-            for t in s:
-                if t.pos not in ['.', ',', '\'', ';', ':', '`', '"', '\'\'', '``', '-LRB-', '-RRB-', 'POS', 'CD']:
-                    lem = t.lem.lower()
-                    #print lem+'_{}'.format(t.pos), 
-                    
-                    if lem not in w2i:
-                        w2i[lem] = windex
-                        windex += 1
-                    
-                    counts[w2i[lem]] += 1 
-            
-            for item in counts.items():
-        
-                rows.append(row)
-                cols.append(item[0])
-                d.append(item[1])
-                
-        row += 1
-
-    D = coo_matrix((d, (rows, cols)))
-    C = Sparse2Corpus(D, documents_columns=False)
-    lsi = LsiModel(corpus=C, num_topics=k)
-    return (w2i, lsi)

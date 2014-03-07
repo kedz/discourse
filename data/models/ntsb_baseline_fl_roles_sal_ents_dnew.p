@@ -1,0 +1,2483 @@
+(idiscourse.inference.perceptron
+PerceptronTrainer
+p1
+(dp2
+S'dsm'
+p3
+ccopy_reg
+_reconstructor
+p4
+(cdiscourse.inference.perceptron
+DiscourseSequenceModel
+p5
+c__builtin__
+object
+p6
+NtRp7
+(dp8
+S'_debug'
+p9
+I00
+sS'_vec'
+p10
+g4
+(csklearn.feature_extraction.dict_vectorizer
+DictVectorizer
+p11
+g6
+NtRp12
+(dp13
+S'vocabulary_'
+p14
+(dp15
+VSALIENT X nsubj --> X otheris_first
+p16
+I73
+sS'there --> the'
+p17
+I530
+sS'commander --> the'
+p18
+I284
+sVX X dobj --> X nsubj
+p19
+I122
+sVSALIENT X nsubj --> X nsubjpassis_last
+p20
+I71
+sS'as --> during'
+p21
+I264
+sVSALIENT X dobj --> X otheris_first
+p22
+I62
+sS'after --> during'
+p23
+I247
+sS'on --> instrumentis_first'
+p24
+I381
+sS'while --> level'
+p25
+I556
+sS'after --> there'
+p26
+I253
+sS'Last Word: statement'
+p27
+I47
+sS'the --> initial'
+p28
+I478
+sS'about --> witness'
+p29
+I229
+sS'witness --> weather'
+p30
+I574
+sS'about --> about'
+p31
+I222
+sS'radio --> radar'
+p32
+I406
+sS'downwind --> witness'
+p33
+I291
+sS'the --> they'
+p34
+I515
+sS'proper --> seventy-nine'
+p35
+I401
+sVSALIENT X dobj --> X dobjis_last
+p36
+I55
+sS'the --> postaccidentis_last'
+p37
+I490
+sVX X prep_near --> X prep_withis_last
+p38
+I192
+sS'First Word: on'
+p39
+I12
+sVX X prep_with --> X prep_with
+p40
+I206
+sS'he --> witness'
+p41
+I348
+sS'there --> accord'
+p42
+I527
+sS'debris --> in'
+p43
+I289
+sVX X prep_into --> X other
+p44
+I189
+sS'First Word: prior'
+p45
+I13
+sS'after --> heis_first'
+p46
+I249
+sS'n8473p --> witness'
+p47
+I370
+sVSALIENT X nsubjpass --> X prep_with
+p48
+I88
+sVX X other --> X prep_in
+p49
+I164
+sS'on --> due'
+p50
+I380
+sS'he --> atc'
+p51
+I338
+sVX X prep_for --> X nsubjpass
+p52
+I180
+sVX X dobj --> X other
+p53
+I124
+sS'a --> inis_last'
+p54
+I214
+sS'review --> the'
+p55
+I412
+sS'additionally --> theis_last'
+p56
+I245
+sS'during --> examination'
+p57
+I294
+sS'examination --> dimensional'
+p58
+I306
+sVX X prep_about --> X prep_about
+p59
+I173
+sVX X nsubj --> X prep_on
+p60
+I137
+sS'the --> no'
+p61
+I484
+sS'a --> nois_last'
+p62
+I215
+sS'examination --> examination'
+p63
+I307
+sVSALIENT X other --> X prep_after
+p64
+I100
+sS'five --> the'
+p65
+I318
+sS'on --> commanderis_first'
+p66
+I379
+sVX X prep_within --> X prep_in
+p67
+I207
+sS'the --> thereis_first'
+p68
+I513
+sVSALIENT X other --> X prep_ofis_last
+p69
+I102
+sVSALIENT X nsubjpass --> X nsubj
+p70
+I78
+sVX X other --> X prep_foris_last
+p71
+I162
+sVX X root --> X other
+p72
+I208
+sS'First Word: cessna'
+p73
+I10
+sS'the --> follow'
+p74
+I468
+sS'on --> thereis_first'
+p75
+I385
+sS'the --> this'
+p76
+I516
+sVX X dobj --> X nsubjis_first
+p77
+I123
+sS'the --> one'
+p78
+I487
+sS'as --> pilot'
+p79
+I266
+sS'the --> only'
+p80
+I488
+sS'faa --> theis_last'
+p81
+I315
+sS'while --> no'
+p82
+I557
+sS'at --> theis_first'
+p83
+I276
+sS'shortly --> sheis_first'
+p84
+I423
+sS'upon --> as'
+p85
+I543
+sVX X prep_on --> X otheris_first
+p86
+I196
+sS'First Word: accord'
+p87
+I7
+sVSALIENT X nsubj --> X prep_onis_last
+p88
+I76
+sS'takeoff --> the'
+p89
+I431
+sS'as --> unable'
+p90
+I270
+sVSALIENT X prep_on --> X dobj
+p91
+I118
+sS'during --> n8473p'
+p92
+I295
+sS'he --> after'
+p93
+I335
+sS'the --> postcrash'
+p94
+I491
+sS'the --> once'
+p95
+I486
+sS'en --> the'
+p96
+I302
+sS'while --> examination'
+p97
+I555
+sS'when --> about'
+p98
+I548
+sVX X prep_as --> X other
+p99
+I175
+sS'weather --> both'
+p100
+I547
+sS'visual --> the'
+p101
+I546
+sS'on --> twois_first'
+p102
+I386
+sVSALIENT X other --> X nsubj
+p103
+I91
+sS'examination --> neither'
+p104
+I309
+sS'a --> theis_first'
+p105
+I219
+sS'Last Word: operators'
+p106
+I39
+sS'the --> accordis_last'
+p107
+I438
+sS'the --> atis_first'
+p108
+I452
+sVSALIENT X other --> X nsubjpassis_last
+p109
+I96
+sS'flight --> accord'
+p110
+I319
+sVX X other --> X nsubjis_last
+p111
+I147
+sVX X other --> X nsubjpass
+p112
+I148
+sS'toxicological --> on'
+p113
+I538
+sVSALIENT X dobj --> X dobj
+p114
+I54
+sS'witness --> investigation'
+p115
+I569
+sS'once --> as'
+p116
+I388
+sVX X prep_into --> X prep_duringis_last
+p117
+I191
+sS'for --> 5'
+p118
+I325
+sS'with --> becauseis_first'
+p119
+I562
+sS'accord --> air'
+p120
+I234
+sVSALIENT X prep_in --> X nsubjis_first
+p121
+I117
+sS'due --> he'
+p122
+I292
+sS'DISC NEW'
+p123
+I1
+sS'she --> the'
+p124
+I422
+sVSALIENT X nsubj --> X otheris_last
+p125
+I74
+sVX X prep_at --> X prep_at
+p126
+I177
+sS'the --> witness'
+p127
+I526
+sVSALIENT X nsubj --> X nsubjis_last
+p128
+I68
+sS'Last Word: on'
+p129
+I38
+sVSALIENT X nsubjpass --> X dobj
+p130
+I77
+sS'the --> flight'
+p131
+I467
+sVX X other --> X otheris_last
+p132
+I151
+sS'accord --> follow'
+p133
+I237
+sS'the --> similaris_last'
+p134
+I504
+sS'prior --> accord'
+p135
+I399
+sS'witness --> survivor'
+p136
+I573
+sS'during --> theis_first'
+p137
+I297
+sS'they --> examination'
+p138
+I533
+sS'examination --> operatorsis_last'
+p139
+I310
+sS'Last Word: examination'
+p140
+I33
+sS'it --> the'
+p141
+I364
+sVX X other --> X prep_afteris_first
+p142
+I153
+sVSALIENT X nsubjpass --> X nsubjpassis_first
+p143
+I81
+sS'two --> the'
+p144
+I541
+sS'review --> nois_first'
+p145
+I411
+sVSALIENT X prep_for --> X nsubj
+p146
+I112
+sS'only --> examination'
+p147
+I391
+sS'First Word: with'
+p148
+I19
+sS'First Word: at'
+p149
+I9
+sS'he --> post-crash'
+p150
+I343
+sS'First Word: after'
+p151
+I8
+sVX X prep_in --> X dobj
+p152
+I186
+sS'Last Word: a'
+p153
+I23
+sVSALIENT X other --> X prep_for
+p154
+I101
+sS'the --> the'
+p155
+I509
+sS'shortly --> when'
+p156
+I425
+sVSALIENT X nsubj --> X nsubj
+p157
+I66
+sS'he --> the'
+p158
+I345
+sS'at --> inspection'
+p159
+I273
+sS'First Word: shortly'
+p160
+I15
+sS'examination --> the'
+p161
+I313
+sS'there --> in'
+p162
+I529
+sS'accord --> a'
+p163
+I230
+sS'the --> examinationis_last'
+p164
+I464
+sS'with --> follow'
+p165
+I563
+sS'about --> he'
+p166
+I224
+sVX X prep_for --> X other
+p167
+I181
+sS'on --> theis_first'
+p168
+I384
+sS'the --> due'
+p169
+I457
+sS'First Word: a'
+p170
+I5
+sS'accord --> afteris_first'
+p171
+I233
+sS'Last Word: 1'
+p172
+I21
+sS'about --> accord'
+p173
+I223
+sS'the --> all'
+p174
+I444
+sVSALIENT X prep_during --> X nsubj
+p175
+I109
+sS'follow --> he'
+p176
+I323
+sS'Last Word: austral'
+p177
+I30
+sS'at --> for'
+p178
+I272
+sS'the --> theis_last'
+p179
+I511
+sVX X prep_with --> X otheris_last
+p180
+I205
+sS'Last Word: during'
+p181
+I32
+sS'from --> onis_last'
+p182
+I329
+sVX X nsubj --> X rootis_last
+p183
+I139
+sS'DISC NEWis_last'
+p184
+I3
+sS'Last Word: all'
+p185
+I28
+sVX X prep_on --> X otheris_last
+p186
+I197
+sVSALIENT X nsubjpass --> X nsubjpass
+p187
+I80
+sVX X dobj --> X dobj
+p188
+I121
+sS'after --> when'
+p189
+I254
+sS'Last Word: additionally'
+p190
+I26
+sS'the --> aircraft'
+p191
+I441
+sS'in --> the'
+p192
+I356
+sS'no --> a'
+p193
+I372
+sVSALIENT X other --> X nsubjis_last
+p194
+I93
+sS'in --> accord'
+p195
+I351
+sS'inspection --> a'
+p196
+I360
+sS'a --> accord'
+p197
+I210
+sS'a --> in'
+p198
+I213
+sS'the --> additionallyis_last'
+p199
+I439
+sS'investigation --> fire'
+p200
+I363
+sS'the --> there'
+p201
+I512
+sS'both --> the'
+p202
+I281
+sS'the --> debris'
+p203
+I456
+sVSALIENT X other --> X prep_prior_to
+p204
+I106
+sS'metallurgical --> the'
+p205
+I369
+sS'static --> toxicological'
+p206
+I427
+sS'when --> both'
+p207
+I549
+sS'the --> shortly'
+p208
+I503
+sS'fire --> no'
+p209
+I317
+sS'initial --> the'
+p210
+I358
+sS'pilot --> during'
+p211
+I393
+sS'civil --> ais_last'
+p212
+I283
+sS'First Word: when'
+p213
+I17
+sS'fire --> fire'
+p214
+I316
+sVX X prep_for --> X nsubj
+p215
+I179
+sS'smoke --> witness'
+p216
+I426
+sVX X other --> X nsubj
+p217
+I145
+sS'no --> the'
+p218
+I374
+sS'also --> additionallyis_last'
+p219
+I259
+sS'the --> post-incident'
+p220
+I489
+sS'seven --> no'
+p221
+I417
+sS'visual --> a'
+p222
+I544
+sS'aircraft --> proper'
+p223
+I256
+sVSALIENT X dobj --> X nsubjpassis_first
+p224
+I59
+sS'the --> radar'
+p225
+I494
+sS'there --> theis_last'
+p226
+I531
+sVSALIENT X nsubj --> X nsubjpassis_first
+p227
+I70
+sS'visual --> flight'
+p228
+I545
+sS'on --> visualis_first'
+p229
+I387
+sS'the --> takeoffis_first'
+p230
+I507
+sVX X prep_for --> X prep_in
+p231
+I183
+sS'no --> adverseis_last'
+p232
+I373
+sS'approximately --> san'
+p233
+I261
+sS'twenty --> the'
+p234
+I539
+sS'the --> further'
+p235
+I472
+sS'the --> after'
+p236
+I440
+sS'the --> totalis_first'
+p237
+I517
+sS'the --> in'
+p238
+I476
+sS'record --> about'
+p239
+I407
+sVX X other --> X prep_at
+p240
+I156
+sVSALIENT X dobj --> X other
+p241
+I61
+sVX X other --> X prep_as
+p242
+I154
+sS'Last Word: similar'
+p243
+I44
+sS'teardown --> at'
+p244
+I432
+sVX X prep_at --> X otheris_last
+p245
+I176
+sS'unable --> while'
+p246
+I542
+sS'neither --> two'
+p247
+I371
+sS'in --> interviewis_last'
+p248
+I354
+sS'radar --> the'
+p249
+I404
+sS'eight --> the'
+p250
+I300
+sS'Last Word: calculation'
+p251
+I31
+sS'approximately --> the'
+p252
+I262
+sS'the --> severe'
+p253
+I502
+sS'accord --> he'
+p254
+I238
+sS'fret --> also'
+p255
+I328
+sS'the --> instrument'
+p256
+I480
+sVSALIENT X prep_for --> X dobj
+p257
+I111
+sS'the --> four'
+p258
+I469
+sVX X other --> X other
+p259
+I149
+sS'after --> as'
+p260
+I246
+sS'cumulonimbus --> accord'
+p261
+I287
+sVX X prep_during --> X other
+p262
+I178
+sVSALIENT X other --> X prep_withis_last
+p263
+I107
+sVSALIENT X nsubjpass --> X otheris_first
+p264
+I84
+sS'after --> he'
+p265
+I248
+sS'Last Word: interview'
+p266
+I36
+sVX X nsubjpass --> X otheris_last
+p267
+I141
+sS'no --> there'
+p268
+I375
+sVX X prep_as --> X nsubj
+p269
+I174
+sS'the --> with'
+p270
+I525
+sS'Last Word: subsequently'
+p271
+I48
+sS'a --> when'
+p272
+I221
+sVSALIENT X other --> X other
+p273
+I97
+sVSALIENT X prep_for --> X other
+p274
+I114
+sS'when --> theis_first'
+p275
+I552
+sS'the --> however'
+p276
+I475
+sVSALIENT X prep_for --> X nsubjpass
+p277
+I113
+sVSALIENT X nsubjpass --> X prep_aboard
+p278
+I86
+sS'post-incident --> there'
+p279
+I396
+sS'during --> when'
+p280
+I299
+sS'cessna --> theis_first'
+p281
+I282
+sS'compliance --> theis_last'
+p282
+I285
+sS'the --> a'
+p283
+I433
+sVSALIENT X other --> X nsubjis_first
+p284
+I92
+sVSALIENT X nsubjpass --> X nsubjis_last
+p285
+I79
+sS'there --> twois_last'
+p286
+I532
+sS'this --> immediately'
+p287
+I535
+sS'on --> ais_first'
+p288
+I378
+sS'a --> radar'
+p289
+I216
+sS'this --> foris_last'
+p290
+I534
+sS'both --> no'
+p291
+I280
+sS'flight --> cumulonimbus'
+p292
+I321
+sS'when --> he'
+p293
+I550
+sS'Last Word: surface'
+p294
+I49
+sS'Last Word: accord'
+p295
+I25
+sVX X prep_prior_to --> X otheris_first
+p296
+I198
+sS'Last Word: two'
+p297
+I52
+sS'flight --> australis_last'
+p298
+I320
+sS'as --> as'
+p299
+I263
+sS'the --> eight'
+p300
+I461
+sS'FIRST SENT - DISC NEW'
+p301
+I4
+sS'immediately --> he'
+p302
+I350
+sS'he --> a'
+p303
+I332
+sS'as --> he'
+p304
+I265
+sVX X prep_for --> X prep_for
+p305
+I182
+sS'fragment --> examinationis_last'
+p306
+I327
+sS'the --> allis_last'
+p307
+I445
+sS'one --> the'
+p308
+I390
+sS'the --> upon'
+p309
+I520
+sS'the --> en'
+p310
+I462
+sS'at --> a'
+p311
+I271
+sVSALIENT X prep_during --> X nsubjpassis_first
+p312
+I110
+sS'allison --> compliance'
+p313
+I258
+sVSALIENT X prep_for --> X prep_during
+p314
+I116
+sS'as --> the'
+p315
+I269
+sS'examination --> seven'
+p316
+I311
+sVX X other --> X otheris_first
+p317
+I150
+sS'a --> reportedlyis_last'
+p318
+I217
+sVSALIENT X other --> X prep_on
+p319
+I103
+sS'Last Word: ``'
+p320
+I22
+sVSALIENT X dobj --> X nsubjpassis_last
+p321
+I60
+sS'the --> calculationis_last'
+p322
+I453
+sS'the --> twenty'
+p323
+I518
+sS'after --> the'
+p324
+I251
+sS'on --> accordis_first'
+p325
+I377
+sS'a --> he'
+p326
+I212
+sS'at --> the'
+p327
+I275
+sS'the --> it'
+p328
+I481
+sS'after --> theis_last'
+p329
+I252
+sS'he --> while'
+p330
+I347
+sS'because --> the'
+p331
+I278
+sVX X other --> X dobj
+p332
+I143
+sS'the --> subsequent'
+p333
+I505
+sVX X other --> X prep_withis_last
+p334
+I171
+sS'she --> she'
+p335
+I421
+sVSALIENT X nsubj --> X prep_due_to
+p336
+I75
+sVX X dobj --> X otheris_last
+p337
+I126
+sS'inspection --> theis_last'
+p338
+I361
+sVX X other --> X prep_due_to
+p339
+I159
+sS'the --> approximately'
+p340
+I448
+sS'examination --> alsois_last'
+p341
+I305
+sVX X other --> X dobjis_last
+p342
+I144
+sS'portion --> two'
+p343
+I394
+sS'the --> aboutis_first'
+p344
+I435
+sS'when --> the'
+p345
+I551
+sS'in --> in'
+p346
+I353
+sS'in --> theis_last'
+p347
+I357
+sS'he --> reportedly'
+p348
+I344
+sS'Last Word: search'
+p349
+I43
+sS'the --> dark'
+p350
+I455
+sS'shortly --> the'
+p351
+I424
+sVX X other --> X prep_on
+p352
+I167
+sVX X prep_into --> X otheris_last
+p353
+I190
+sS'Last Word: soon'
+p354
+I46
+sVX X other --> X prep_of
+p355
+I165
+sVX X prep_from --> X other
+p356
+I184
+sS'radar --> witness'
+p357
+I405
+sVX X other --> X prep_following
+p358
+I161
+sVX X nsubjpass --> X other
+p359
+I140
+sS'the --> he'
+p360
+I473
+sS'follow --> fret'
+p361
+I322
+sS'a --> a'
+p362
+I209
+sS'the --> examination'
+p363
+I463
+sS'reportedly --> soonis_last'
+p364
+I410
+sS'level --> on'
+p365
+I366
+sS'the --> while'
+p366
+I522
+sS'prior --> heis_first'
+p367
+I400
+sVX X prep_in --> X other
+p368
+I187
+sS'postflight --> theis_last'
+p369
+I398
+sS'the --> visual'
+p370
+I521
+sS'Last Word: in'
+p371
+I35
+sS'engine --> the'
+p372
+I303
+sS'radar --> examination'
+p373
+I403
+sS'accord --> landing'
+p374
+I239
+sVSALIENT X other --> X otheris_first
+p375
+I98
+sVSALIENT X nsubjpass --> X otheris_last
+p376
+I85
+sS'the --> at'
+p377
+I451
+sVX X dobj --> X prep_aboutis_first
+p378
+I127
+sS'the --> as'
+p379
+I449
+sVX X other --> X nsubjis_first
+p380
+I146
+sVX X other --> X ccomp
+p381
+I142
+sS'the --> whileis_last'
+p382
+I524
+sVSALIENT X dobj --> X prep_duringis_last
+p383
+I64
+sS'both --> both'
+p384
+I279
+sVSALIENT X nsubj --> X nsubjpass
+p385
+I69
+sS'Last Word: also'
+p386
+I29
+sVSALIENT X other --> X otheris_last
+p387
+I99
+sS'follow --> the'
+p388
+I324
+sVSALIENT X nsubj --> X nsubjis_first
+p389
+I67
+sVX X dobj --> X prep_during
+p390
+I128
+sVX X ccomp --> X other
+p391
+I120
+sVX X other --> X prep_during
+p392
+I160
+sS'the --> heis_first'
+p393
+I474
+sS'also --> review'
+p394
+I260
+sS'during --> theis_last'
+p395
+I298
+sVX X other --> X prep_asis_first
+p396
+I155
+sS'he --> theis_last'
+p397
+I346
+sS'the --> inis_first'
+p398
+I477
+sS'the --> postcrashis_first'
+p399
+I492
+sS'a --> the'
+p400
+I218
+sS'radar --> at'
+p401
+I402
+sS'in --> static'
+p402
+I355
+sS'the --> also'
+p403
+I447
+sS'the --> radaris_first'
+p404
+I495
+sS'Last Word: pilot'
+p405
+I40
+sS'normal --> postflight'
+p406
+I376
+sS'First Word: while'
+p407
+I18
+sS'as --> seconds'
+p408
+I267
+sVSALIENT X nsubj --> X other
+p409
+I72
+sVSALIENT X nsubjpass --> X nsubjpassis_last
+p410
+I82
+sS'witness --> after'
+p411
+I565
+sVSALIENT X dobj --> X nsubjpass
+p412
+I58
+sS'he --> duringis_last'
+p413
+I340
+sS'the --> fragment'
+p414
+I470
+sS'the --> prior'
+p415
+I493
+sS'en --> he'
+p416
+I301
+sS'seconds --> examination'
+p417
+I416
+sS'on --> the'
+p418
+I383
+sVX X other --> X prep_to
+p419
+I168
+sS'the --> from'
+p420
+I471
+sS'witness --> subsequently'
+p421
+I572
+sVX X prep_about --> X other
+p422
+I172
+sS'Last Word: adverse'
+p423
+I27
+sVSALIENT X nsubj --> X dobj
+p424
+I65
+sS'low --> he'
+p425
+I367
+sVX X other --> X prep_after
+p426
+I152
+sS'the --> inspection'
+p427
+I479
+sS'the --> during'
+p428
+I458
+sS'further --> the'
+p429
+I330
+sVX X nsubj --> X nsubj
+p430
+I131
+sS'exam --> the'
+p431
+I304
+sS'safety --> the'
+p432
+I414
+sS'due --> the'
+p433
+I293
+sVSALIENT X dobj --> X nsubjis_last
+p434
+I57
+sS'san --> the'
+p435
+I415
+sS'witness --> approximately'
+p436
+I566
+sS'however --> additionallyis_last'
+p437
+I349
+sVSALIENT X other --> X dobj
+p438
+I89
+sVX X nsubj --> X prep_in
+p439
+I136
+sS'records --> ais_last'
+p440
+I408
+sS'two --> a'
+p441
+I540
+sVX X prep_from --> X otheris_first
+p442
+I185
+sS'witness --> downwind'
+p443
+I567
+sVSALIENT X other --> X prep_onis_first
+p444
+I104
+sS'the --> duringis_last'
+p445
+I460
+sVX X dobj --> X prep_ofis_last
+p446
+I130
+sS'subsequent --> the'
+p447
+I428
+sS'examination --> further'
+p448
+I308
+sVSALIENT X nsubjpass --> X prep_for
+p449
+I87
+sS'landing --> pilotis_last'
+p450
+I365
+sS'after --> shortly'
+p451
+I250
+sVSALIENT X prep_for --> X otheris_first
+p452
+I115
+sS'dark --> the'
+p453
+I288
+sS'pilot --> as'
+p454
+I392
+sS'this --> searchis_last'
+p455
+I536
+sS'reportedly --> after'
+p456
+I409
+sVX X nsubj --> X nsubjis_last
+p457
+I132
+sS'Last Word: about'
+p458
+I24
+sS'while --> a'
+p459
+I554
+sS'one --> a'
+p460
+I389
+sS'about --> theis_first'
+p461
+I228
+sVX X other --> X prep_with
+p462
+I170
+sS'postcrash --> the'
+p463
+I397
+sVX X prep_in --> X prep_within
+p464
+I188
+sVX X dobj --> X otheris_first
+p465
+I125
+sS'total --> the'
+p466
+I537
+sS'First Word: during'
+p467
+I11
+sS'accord --> the'
+p468
+I242
+sS'the --> about'
+p469
+I434
+sS'the --> accordis_first'
+p470
+I437
+sS'the --> metallurgical'
+p471
+I483
+sS'witness --> engine'
+p472
+I568
+sS'accord --> duringis_last'
+p473
+I235
+sS'5 --> 1is_last'
+p474
+I0
+sS'metallurgical --> counterweight'
+p475
+I368
+sS'Last Word: since'
+p476
+I45
+sS'about --> shortly'
+p477
+I226
+sVX X nsubj --> X other
+p478
+I133
+sS'accord --> flight'
+p479
+I236
+sS'he --> metallurgical'
+p480
+I342
+sS'while --> theis_first'
+p481
+I559
+sS'review --> theis_last'
+p482
+I413
+sS'a --> examination'
+p483
+I211
+sVSALIENT X other --> X nsubjpassis_first
+p484
+I95
+sS'examination --> theis_last'
+p485
+I314
+sS'all --> the'
+p486
+I257
+sS'post-crash --> theis_last'
+p487
+I395
+sVX X other --> X prep_between
+p488
+I158
+sS'while --> theis_last'
+p489
+I560
+sS'counterweight --> additionally'
+p490
+I286
+sS'the --> five'
+p491
+I466
+sS'air --> the'
+p492
+I255
+sS'severe --> theis_last'
+p493
+I420
+sS'there --> air'
+p494
+I528
+sS'Last Word: postaccident'
+p495
+I41
+sVSALIENT X other --> X dobjis_last
+p496
+I90
+sS'the --> radio'
+p497
+I496
+sS'the --> surfaceis_last'
+p498
+I506
+sS'about --> the'
+p499
+I227
+sS'Last Word: for'
+p500
+I34
+sS'the --> ais_first'
+p501
+I442
+sS'the --> thereis_last'
+p502
+I514
+sVSALIENT X other --> X nsubjpass
+p503
+I94
+sVX X prep_to --> X other
+p504
+I200
+sVSALIENT X dobj --> X nsubj
+p505
+I56
+sS'witness --> smoke'
+p506
+I571
+sS'the --> whileis_first'
+p507
+I523
+sS'Last Word: no'
+p508
+I37
+sS'he --> he'
+p509
+I341
+sS'initial --> this'
+p510
+I359
+sS'accord --> after'
+p511
+I232
+sS'Last Word: there'
+p512
+I51
+sS'the --> accord'
+p513
+I436
+sS'a --> theis_last'
+p514
+I220
+sVX X nsubj --> X rootis_first
+p515
+I138
+sS'accord --> when'
+p516
+I244
+sVX X prep_toward --> X other
+p517
+I201
+sS'Last Word: the'
+p518
+I50
+sVX X other --> X prep_upon
+p519
+I169
+sS'instrument --> the'
+p520
+I362
+sVX X prep_with --> X other
+p521
+I204
+sS'subsequently --> the'
+p522
+I429
+sVX X nsubj --> X prep_duringis_first
+p523
+I135
+sVSALIENT X prep_as --> X nsubjis_first
+p524
+I108
+sVSALIENT X dobj --> X otheris_last
+p525
+I63
+sS'with --> after'
+p526
+I561
+sS'he --> about'
+p527
+I333
+sS'during --> the'
+p528
+I296
+sS'when --> witness'
+p529
+I553
+sS'he --> as'
+p530
+I336
+sVX X prep_under --> X prep_under
+p531
+I202
+sS'he --> at'
+p532
+I337
+sS'atc --> examination'
+p533
+I277
+sS'witness --> pilotis_first'
+p534
+I570
+sS'accord --> theis_last'
+p535
+I243
+sS'First Word: review'
+p536
+I14
+sS'several --> exam'
+p537
+I419
+sVX X prep_of --> X other
+p538
+I193
+sS'the --> normal'
+p539
+I485
+sS'the --> records'
+p540
+I498
+sS'the --> asis_first'
+p541
+I450
+sS'he --> ``is_last'
+p542
+I331
+sVX X prep_on --> X nsubjpass
+p543
+I194
+sVX X other --> X prep_ofis_last
+p544
+I166
+sS'the --> record'
+p545
+I497
+sVX X other --> X prep_from
+p546
+I163
+sS'Last Word: while'
+p547
+I53
+sVX X prep_on --> X other
+p548
+I195
+sS'seventy-nine --> theis_last'
+p549
+I418
+sVSALIENT X nsubjpass --> X other
+p550
+I83
+sS'about --> portion'
+p551
+I225
+sVSALIENT X prep_with --> X dobj
+p552
+I119
+sS'on --> oneis_first'
+p553
+I382
+sS'at --> sinceis_last'
+p554
+I274
+sS'the --> teardown'
+p555
+I508
+sS'the --> reportedly'
+p556
+I499
+sS'while --> the'
+p557
+I558
+sS'survivor --> theis_last'
+p558
+I430
+sS'the --> ais_last'
+p559
+I443
+sS'the --> two'
+p560
+I519
+sVX X other --> X prep_atis_first
+p561
+I157
+sS'the --> allison'
+p562
+I446
+sS'as --> subsequentlyis_last'
+p563
+I268
+sVX X prep_with --> X nsubjpass
+p564
+I203
+sS'First Word: witness'
+p565
+I20
+sS'the --> civil'
+p566
+I454
+sVX X prep_to --> X nsubj
+p567
+I199
+sS'examination --> statementis_last'
+p568
+I312
+sS'First Word: the'
+p569
+I16
+sS'he --> during'
+p570
+I339
+sS'the --> review'
+p571
+I500
+sVSALIENT X other --> X prep_onis_last
+p572
+I105
+sS'Last Word: reportedly'
+p573
+I42
+sS'DISC NEWis_first'
+p574
+I2
+sS'four --> theis_last'
+p575
+I326
+sS'First Word: about'
+p576
+I6
+sS'accord --> radar'
+p577
+I240
+sS'the --> faa'
+p578
+I465
+sS'in --> he'
+p579
+I352
+sVX X dobj --> X prep_in
+p580
+I129
+sS'the --> several'
+p581
+I501
+sVX X nsubj --> X otheris_last
+p582
+I134
+sS'witness --> accord'
+p583
+I564
+sS'the --> low'
+p584
+I482
+sS'accord --> accord'
+p585
+I231
+sS'he --> aboutis_last'
+p586
+I334
+sS'dimensional --> review'
+p587
+I290
+sS'the --> theis_first'
+p588
+I510
+sS'the --> duringis_first'
+p589
+I459
+sS'accord --> safety'
+p590
+I241
+ssS'dtype'
+p591
+cnumpy
+float64
+p592
+sS'feature_names_'
+p593
+(lp594
+g474
+ag123
+ag574
+ag184
+ag301
+ag170
+ag576
+ag87
+ag151
+ag149
+ag73
+ag467
+ag39
+ag45
+ag536
+ag160
+ag569
+ag213
+ag407
+ag148
+ag565
+ag172
+ag320
+ag153
+ag458
+ag295
+ag190
+ag423
+ag185
+ag386
+ag177
+ag251
+ag181
+ag140
+ag500
+ag371
+ag266
+ag508
+ag129
+ag106
+ag405
+ag495
+ag573
+ag349
+ag243
+ag476
+ag354
+ag27
+ag271
+ag294
+ag518
+ag512
+ag297
+ag547
+ag114
+ag36
+ag505
+ag434
+ag412
+ag224
+ag321
+ag241
+ag22
+ag525
+ag383
+ag424
+ag157
+ag389
+ag128
+ag385
+ag227
+ag20
+ag409
+ag16
+ag125
+ag336
+ag88
+ag130
+ag70
+ag285
+ag187
+ag143
+ag410
+ag550
+ag264
+ag376
+ag278
+ag449
+ag48
+ag438
+ag496
+ag103
+ag284
+ag194
+ag503
+ag484
+ag109
+ag273
+ag375
+ag387
+ag64
+ag154
+ag69
+ag319
+ag444
+ag572
+ag204
+ag263
+ag524
+ag175
+ag312
+ag257
+ag146
+ag277
+ag274
+ag452
+ag314
+ag121
+ag91
+ag552
+ag391
+ag188
+ag19
+ag77
+ag53
+ag465
+ag337
+ag378
+ag390
+ag580
+ag446
+ag430
+ag457
+ag478
+ag582
+ag523
+ag439
+ag60
+ag515
+ag183
+ag359
+ag267
+ag381
+ag332
+ag342
+ag217
+ag380
+ag111
+ag112
+ag259
+ag317
+ag132
+ag426
+ag142
+ag242
+ag396
+ag240
+ag561
+ag488
+ag339
+ag392
+ag358
+ag71
+ag546
+ag49
+ag355
+ag544
+ag352
+ag419
+ag519
+ag462
+ag334
+ag422
+ag59
+ag269
+ag99
+ag245
+ag126
+ag262
+ag215
+ag52
+ag167
+ag305
+ag231
+ag356
+ag442
+ag152
+ag368
+ag464
+ag44
+ag353
+ag117
+ag38
+ag538
+ag543
+ag548
+ag86
+ag186
+ag296
+ag567
+ag504
+ag517
+ag531
+ag564
+ag521
+ag180
+ag40
+ag67
+ag72
+ag362
+ag197
+ag483
+ag326
+ag198
+ag54
+ag62
+ag289
+ag318
+ag400
+ag105
+ag514
+ag272
+ag31
+ag173
+ag166
+ag551
+ag477
+ag499
+ag461
+ag29
+ag163
+ag585
+ag511
+ag171
+ag120
+ag473
+ag479
+ag133
+ag254
+ag374
+ag577
+ag590
+ag468
+ag535
+ag516
+ag56
+ag260
+ag23
+ag265
+ag46
+ag451
+ag324
+ag329
+ag26
+ag189
+ag492
+ag223
+ag486
+ag313
+ag219
+ag394
+ag233
+ag252
+ag299
+ag21
+ag304
+ag79
+ag408
+ag563
+ag315
+ag90
+ag311
+ag178
+ag159
+ag554
+ag327
+ag83
+ag533
+ag331
+ag384
+ag291
+ag202
+ag281
+ag212
+ag18
+ag282
+ag490
+ag261
+ag453
+ag43
+ag587
+ag33
+ag122
+ag433
+ag57
+ag92
+ag528
+ag137
+ag395
+ag280
+ag250
+ag416
+ag96
+ag372
+ag431
+ag341
+ag58
+ag63
+ag448
+ag104
+ag139
+ag316
+ag568
+ag161
+ag485
+ag81
+ag214
+ag209
+ag65
+ag110
+ag298
+ag292
+ag361
+ag176
+ag388
+ag118
+ag575
+ag306
+ag255
+ag182
+ag429
+ag542
+ag303
+ag527
+ag586
+ag93
+ag530
+ag532
+ag51
+ag570
+ag413
+ag509
+ag480
+ag150
+ag348
+ag158
+ag397
+ag330
+ag41
+ag437
+ag302
+ag195
+ag579
+ag346
+ag248
+ag402
+ag192
+ag347
+ag210
+ag510
+ag196
+ag338
+ag520
+ag200
+ag141
+ag450
+ag365
+ag425
+ag475
+ag205
+ag47
+ag247
+ag193
+ag232
+ag218
+ag268
+ag406
+ag325
+ag288
+ag66
+ag50
+ag24
+ag553
+ag418
+ag168
+ag75
+ag102
+ag229
+ag116
+ag460
+ag308
+ag147
+ag454
+ag211
+ag343
+ag487
+ag279
+ag463
+ag369
+ag135
+ag367
+ag35
+ag401
+ag373
+ag249
+ag357
+ag32
+ag239
+ag440
+ag456
+ag364
+ag145
+ag55
+ag482
+ag432
+ag435
+ag417
+ag221
+ag549
+ag537
+ag493
+ag335
+ag124
+ag84
+ag351
+ag156
+ag216
+ag206
+ag447
+ag522
+ag558
+ag89
+ag244
+ag283
+ag469
+ag344
+ag513
+ag470
+ag107
+ag199
+ag236
+ag191
+ag501
+ag559
+ag174
+ag307
+ag562
+ag403
+ag340
+ag379
+ag541
+ag377
+ag108
+ag322
+ag566
+ag350
+ag203
+ag169
+ag428
+ag589
+ag445
+ag300
+ag310
+ag363
+ag164
+ag578
+ag491
+ag131
+ag74
+ag258
+ag414
+ag420
+ag235
+ag360
+ag393
+ag276
+ag238
+ag398
+ag28
+ag427
+ag256
+ag328
+ag584
+ag471
+ag61
+ag539
+ag95
+ag78
+ag80
+ag220
+ag37
+ag94
+ag399
+ag415
+ag225
+ag404
+ag497
+ag545
+ag540
+ag556
+ag571
+ag581
+ag253
+ag208
+ag134
+ag333
+ag498
+ag230
+ag555
+ag155
+ag588
+ag179
+ag201
+ag68
+ag502
+ag34
+ag76
+ag237
+ag323
+ag560
+ag309
+ag370
+ag366
+ag507
+ag382
+ag270
+ag127
+ag42
+ag494
+ag162
+ag17
+ag226
+ag286
+ag138
+ag290
+ag287
+ag455
+ag466
+ag113
+ag234
+ag441
+ag144
+ag246
+ag85
+ag222
+ag228
+ag101
+ag100
+ag98
+ag207
+ag293
+ag345
+ag275
+ag529
+ag459
+ag97
+ag25
+ag82
+ag557
+ag481
+ag489
+ag526
+ag119
+ag165
+ag583
+ag411
+ag436
+ag443
+ag472
+ag115
+ag534
+ag506
+ag421
+ag136
+ag30
+asS'separator'
+p595
+S'='
+sS'sparse'
+p596
+I01
+sbsS'_use_relaxed'
+p597
+I00
+sS'size_psi'
+p598
+cnumpy.core.multiarray
+scalar
+p599
+(cnumpy
+dtype
+p600
+(S'i4'
+I0
+I1
+tRp601
+(I3
+S'<'
+NNNI-1
+I-1
+I0
+tbS'?\x02\x00\x00'
+tRp602
+sS'_constrained'
+p603
+I01
+sS'_use_gurobi'
+p604
+I01
+sbsS'sp'
+p605
+g4
+(cpystruct.learners.structured_perceptron
+StructuredPerceptron
+p606
+g6
+NtRp607
+(dp608
+S'C'
+F1
+sS'n_jobs'
+p609
+I1
+sS'verbose'
+p610
+I0
+sS'average'
+p611
+I00
+sS'max_iter'
+p612
+I10
+sS'batch'
+p613
+I00
+sS'show_loss_every'
+p614
+I0
+sS'w'
+cnumpy.core.multiarray
+_reconstruct
+p615
+(cnumpy.matrixlib.defmatrix
+matrix
+p616
+(I0
+tS'b'
+tRp617
+(I1
+(I1
+I575
+tg600
+(S'f8'
+I0
+I1
+tRp618
+(I3
+S'<'
+NNNI-1
+I-1
+I0
+tbI00
+S'\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x08\xc0\x00\x00\x00\x00\x00\x00 @\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00\xc0\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x10@\x00\x00\x00\x00\x00\x00\xf0\xbf\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x10@\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00"@\x00\x00\x00\x00\x00\x00\x10@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\xf0\xbf\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x10@\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x10@\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x1c@\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x10@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\x14@\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x10@\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xc0\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x00\xc0\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08\xc0\x00\x00\x00\x00\x00\x00\x10@\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\xf0\xbf\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf0\xbf\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x14@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\xf0\xbf\x00\x00\x00\x00\x00\x00\x08\xc0\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xc0\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf0\xbf\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x10@\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x08\xc0\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x10@\x00\x00\x00\x00\x00\x00\x00\xc0\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00\xc0\x00\x00\x00\x00\x00\x00\x10@\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x14@\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\xf0\xbf\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\x10\xc0\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\xf0\xbf\x00\x00\x00\x00\x00\x00\x10@\x00\x00\x00\x00\x00\x00\x10@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\xf0\xbf\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\xf0\xbf\x00\x00\x00\x00\x00\x00\x10@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00 @\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\xf0\xbf\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x10@\x00\x00\x00\x00\x00\x00\x14@\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\x14@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x10@\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\xf0\xbf\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00\xc0\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x10@\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x08\xc0\x00\x00\x00\x00\x00\x00\x10@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x14\xc0\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x10@\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00 @\x00\x00\x00\x00\x00\x00\x10@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\xf0\xbf\x00\x00\x00\x00\x00\x00\x10@\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x10@\x00\x00\x00\x00\x00\x00\x10@\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x14@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x10@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\x14@\x00\x00\x00\x00\x00\x00\xf0\xbf\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x14@\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x18@\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x1c@\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\x14@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x18@\x00\x00\x00\x00\x00\x00\x10@\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\xf0\xbf\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x10@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x14@\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x10@\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\x18@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x10@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\xf0\xbf\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x18@\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x10@\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x14@\x00\x00\x00\x00\x00\x00\xf0\xbf\x00\x00\x00\x00\x00\x00\x18@\x00\x00\x00\x00\x00\x00\x14@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x18@\x00\x00\x00\x00\x00\x00\x10@\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x14@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x10@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x14@\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf0\xbf\x00\x00\x00\x00\x00\x00\x1c@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00$@\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\xf0\xbf\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\x1c@\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x10@\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x10@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x10@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\x10@\x00\x00\x00\x00\x00\x00\xf0\xbf\x00\x00\x00\x00\x00\x00\x14@\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\xf0\xbf\x00\x00\x00\x00\x00\x00\xf0\xbf\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\xf0\xbf\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\x10@\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf0\xbf\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x14@\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x10@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\xf0\xbf\x00\x00\x00\x00\x00\x00\xf0\xbf\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00\xc0\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x10@\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\xf0\xbf\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\xf0\xbf\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xc0\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\xf0\xbf\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\xf0\xbf\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x14@\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x10@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x10\xc0\x00\x00\x00\x00\x00\x00\x00\xc0\x00\x00\x00\x00\x00\x00 @\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x10@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x10@\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\x10@\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x18@\x00\x00\x00\x00\x00\x00\x10@\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x10@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x18@\x00\x00\x00\x00\x00\x00\x14@\x00\x00\x00\x00\x00\x00\x1c@\x00\x00\x00\x00\x00\x00\x10@\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x10@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x14@\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\xf0\xbf\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x14@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\xf0\xbf\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x08@\x00\x00\x00\x00\x00\x00\xf0?\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x00@\x00\x00\x00\x00\x00\x00\x08@'
+tbsS'decay_exponent'
+p619
+I0
+sS'model'
+p620
+g7
+sS'loss_curve_'
+p621
+(lp622
+g599
+(g618
+S'\x1e\x1e\x1e\x1e\x1e\x1e\xee?'
+tRp623
+ag599
+(g618
+S'L7\xa0\x93\xd2\x97\xed?'
+tRp624
+ag599
+(g618
+S'\xb2\xf0\xb5\xdb\x1e\xcf\xed?'
+tRp625
+ag599
+(g618
+S'>O\xfb\x9elh\xed?'
+tRp626
+ag599
+(g618
+S'S\xab\xf2\x8d\x85\xaf\xed?'
+tRp627
+ag599
+(g618
+S'1gV\xaa\x069\xed?'
+tRp628
+ag599
+(g618
+S'\xd9\x95\xe5V 1\xed?'
+tRp629
+ag599
+(g618
+S'<<<<<<\xec?'
+tRp630
+ag599
+(g618
+S'\xd9\x95\xe5V 1\xed?'
+tRp631
+ag599
+(g618
+S'zP"\t\x87\x11\xed?'
+tRp632
+asS'logger'
+p633
+NsS'decay_t0'
+p634
+I10
+sbsb.
