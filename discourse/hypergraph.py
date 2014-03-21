@@ -3,7 +3,6 @@ import pydecode.chart as chart
 import itertools
 from collections import namedtuple, defaultdict
 from discourse.gazetteers import DiscourseConnectives
-from bitstring import Bits, BitArray
 
 
 class Sentence(namedtuple("Sentence", ["label", "prev_sents",
@@ -18,7 +17,7 @@ class Sentence(namedtuple("Sentence", ["label", "prev_sents",
     prev_sent -- A list of the n-1 previous sentences taken to get to
         this node where n is the history size.
     """
-    def __new__(_cls, label, prev_sents, pos, entities=Bits(1), conn=''):
+    def __new__(_cls, label, prev_sents, pos, entities=frozenset(), conn=''):
         non_nulls = [x for x in prev_sents if x != ()]
 
         return super(_cls, Sentence).__new__(_cls, label, tuple(non_nulls),
@@ -26,7 +25,7 @@ class Sentence(namedtuple("Sentence", ["label", "prev_sents",
 
     def __str__(self):
         return "{}: {}, {}, {}, {}".format(self.pos, self.label,
-                                           self.prev_sents, self.entities.bin,
+                                           self.prev_sents, self.entities,
                                            self.conn)
 
 
@@ -35,7 +34,7 @@ class Transition:
     A Transition is an edge between sentence nodes in the sentence
     ordering hypergraph.
     """
-    def __init__(self, sents, pos=0, prev_ents=Bits(1), conn=''):
+    def __init__(self, sents, pos=0, prev_ents=frozenset(), conn=''):
         """
         sents -- A list of n sentence labels, where n is the history
             size of the models.
@@ -64,7 +63,7 @@ class Transition:
             for sent in self.sents[1:]:
                 label = "{} -> ".format(sent) + label
         return label + "{}, {}, {}, {}".format(self.sents[0],
-                                               self.prev_ents.bin, self.conn,
+                                               self.prev_ents, self.conn,
                                                self.pos)
 
     def __eq__(self, other):
@@ -106,7 +105,7 @@ def build_hypergraph(discourse_model, c):
 
     # The number of sentence positions to predict - the +1 is for the
     # last sentence to the 'END' label.
-    positions = len(discourse_model) + 1
+    positions = len(discourse_model)
 
     # The number of salient entities to track in the model.
     # This number should probably not go above 4 or the graph will
@@ -117,7 +116,7 @@ def build_hypergraph(discourse_model, c):
     node_labels = ['sent-'+str(i) for i, s in enumerate(discourse_model)]
 
     # The start node of the graph. Everyone has to start somewhere :)
-    start_sent = Sentence('START', (), 0, entities=Bits(nsalient))
+    start_sent = Sentence('START', (), -1)
 
     # As we build the graph, this will hold the previous position's
     # nodes, that is, the set of nodes it is possible to add edges
@@ -125,7 +124,7 @@ def build_hypergraph(discourse_model, c):
     nodes = set()
 
     # Dict mapping sentence indices to salient entity bit strings.
-    s2b = discourse_model.sent2ent_bstr
+    s2e = discourse_model.sent2sal_ents
 
     # Dict mapping sentence indices to explicit discourse connectives
     # or the empty string ''.
@@ -138,9 +137,9 @@ def build_hypergraph(discourse_model, c):
     for node_label1 in node_labels:
         # Create new sentence node.
         conn = s2t[s2i(node_label1)]
-        ent_bstr = s2b[s2i(node_label1)]
-        s = Sentence(node_label1, tuple([start_sent.label]), 1,
-                     entities=ent_bstr, conn=conn)
+        ents = s2e[s2i(node_label1)]
+        s = Sentence(node_label1, (), 0,
+                     entities=ents, conn=conn)
 
         # Add an edge from start to sentence s in the graph.
         c[s] = c.sum([c[start_sent] * c.sr(Transition(
@@ -151,7 +150,7 @@ def build_hypergraph(discourse_model, c):
         nodes.add(s)
 
     # Create the remaining graph nodes/edges.
-    for position in range(2, positions):
+    for position in range(1, positions):
         # Find all possible edges for each possible new node
         n2e = defaultdict(set)
         for node_label1 in node_labels:
@@ -159,11 +158,11 @@ def build_hypergraph(discourse_model, c):
             for node in nodes:
                 if node_label1 == node.label:
                     continue
-                next_bstr = s2b[s2i(node_label1)] | node.entities
+                sal_ents = s2e[s2i(node_label1)].union(node.entities)
                 if next_conn == '':
                     next_conn = node.conn
-                s = Sentence(node_label1, tuple([node.label, ]), position,
-                             entities=next_bstr, conn=next_conn)
+                s = Sentence(node_label1, (), position,
+                             entities=sal_ents, conn=next_conn)
                 n2e[s].add(node)
 
         # Create the new nodes and edges.
@@ -177,14 +176,13 @@ def build_hypergraph(discourse_model, c):
         nodes = n2e.keys()
 
     # Create the final END node.
-    ent_bstrs = set([Bits(nsalient) | item[1]
-                     for item in discourse_model.sent2ent_bstr.items()])
-    end_bstr = reduce(lambda x, y: x | y, ent_bstrs, Bits(nsalient))
-    c[Sentence('END', (), positions, entities=end_bstr)] = \
-        c.sum([c[node] * c.sr(Transition(('END', node.label), pos=positions,
+    end_ents = reduce(lambda x, y: x.union(y), s2e.values(), frozenset())
+    c[Sentence('END', (), positions, entities=end_ents)] = \
+        c.sum([c[node] * c.sr(Transition(('END', node.label),
+                                         pos=positions,
                                          prev_ents=node.entities,
                                          conn=node.conn))
-               for node in nodes if node.entities == end_bstr])
+               for node in nodes if node.entities == end_ents])
 
     return c
 

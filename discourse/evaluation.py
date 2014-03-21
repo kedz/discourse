@@ -6,9 +6,32 @@ import textwrap
 from discourse.models.rush import RushModel
 import scipy as sp
 
+def explain_predicted(test_docs, predy, model, feats):
+
+
+    # Print stats for individual test instances.
+    for test_idx, datum in enumerate(izip(test_docs, predY), 1):
+        test_doc, predy = datum
+        print u'TEST NO. {:4}\n=============\n'.format(test_idx)
+
+        # Print Kendalls Tau and pvalue for baseline and new model
+        # for this test instance.
+        kt, pval = kendalls_tau(predy)
+        print u'Kendall\'s Tau: {:.3f}  (pval: {:.3f})'.format(kt, pval)
+
+        # Print bigram gold sequence overlap (accuracy) for baseline
+        # and new model.
+        bg_acc = bigram_acc(predy)
+        print u'Bigram Accuracy: {:.3f}'.format(bg_acc)
+        
+        
+        
+        print
 
 def eval_against_baseline(testX, baselineY, newY, baseline_model, new_model,
-                          base_feats, new_feats):
+                          base_feats, new_feats,
+                          baseline_pred_trainY=None,
+                          new_pred_trainY=None):
     """
     Evaluate differences in two models. Prints out per instance
     analysis of transitions predicted by baseline and new models.
@@ -45,6 +68,7 @@ def eval_against_baseline(testX, baselineY, newY, baseline_model, new_model,
     # and new model.
     bl_avg_kt, bl_avg_pval = avg_kendalls_tau(baselineY)
     new_avg_kt, new_avg_pval = avg_kendalls_tau(newY)
+        
     print u'\t     | BASELINE      | NEW'
     print u'{:14} {:.3f} ({:.3f}) | {:.3f} ({:.3f})\n'.format(u'Kendalls Tau',
                                                               bl_avg_kt,
@@ -60,6 +84,43 @@ def eval_against_baseline(testX, baselineY, newY, baseline_model, new_model,
     print u'{:12} | {:.3f}         | {:.3f} \n'.format(u'bigram acc',
                                                        bl_bg_acc,
                                                        new_bg_acc)
+
+    if baseline_pred_trainY is not None or new_pred_trainY is not None:
+         
+        if baseline_pred_trainY is not None:
+            bl_avg_kt_train, bl_avg_pval_train = avg_kendalls_tau(
+                baseline_pred_trainY)
+
+            bl_bg_acc_train = mac_avg_bigram_acc(baseline_pred_trainY)
+        
+        else: 
+            bl_avg_kt_train = float('nan')
+            bl_avg_pval_train = float('nan')
+            bl_bg_acc_train = float('nan')
+
+        if new_pred_trainY is not None:
+            new_avg_kt_train, new_avg_pval_train = avg_kendalls_tau(
+                new_pred_trainY)
+
+            new_bg_acc_train = mac_avg_bigram_acc(new_pred_trainY)
+
+        else: 
+            new_avg_kt_train = float('nan')
+            new_avg_pval_train = float('nan')
+            new_bg_acc_train = float('nan')
+
+        print u'OVERALL STATS FOR TRAINING DOCUMENTS'
+        print u'\t     | BASELINE      | NEW'
+        print u'{:14} {:.3f} ({:.3f}) | {:.3f} ({:.3f})\n'.format(
+            u'Kendalls Tau',
+            bl_avg_kt_train,
+            bl_avg_pval_train,
+            new_avg_kt_train,
+            new_avg_pval_train)
+        print u'\t     | BASELINE      | NEW'
+        print u'{:12} | {:.3f}         | {:.3f} \n'.format(u'bigram acc',
+                                                           bl_bg_acc_train,
+                                                           new_bg_acc_train)
 
     # Print stats for individual test instances.
     for test_idx, datum in enumerate(izip(testX, baselineY, newY), 1):
@@ -173,7 +234,24 @@ def eval_against_baseline(testX, baselineY, newY, baseline_model, new_model,
                 print
 
 
-def explain(t, baseline_model, new_model, testdoc, base_feats, new_feats):
+
+def explain_transition(transition, model, testx):
+    weights = model.dsm._vec.inverse_transform(model.sp.w)[0]
+
+    feats = model.dsm._vec.inverse_transform(
+        model.dsm.psi(testx, [transition]))[0].keys()
+
+    # Print baseline model features for this transition and their score
+    # under the baseline and new model.
+
+    print 'FEATURE                             | WEIGHT'
+    for feat in feats:
+        w = weights[feat] if feat in weights else '?'
+        print u'{:35} | {:3}'.format(feat, w)
+    print
+
+
+def compare_model(t, baseline_model, new_model, testdoc, base_feats, new_feats):
     """
     Prints the features and feature scores for a transition t under a
     baseline and new model.

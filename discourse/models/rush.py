@@ -5,11 +5,12 @@ import discourse.gazetteers as gazetteers
 import itertools
 from bitstring import BitArray, Bits
 from discourse.hypergraph import Transition
+import discourse.hypergraph
 import nltk
-
+import textwrap
 
 # These are the default features that are active
-active_features = defaultdict(lambda: False)
+active_features = {}
 
 # Decorate features if they are active for first and last
 # sequence transitions.
@@ -22,7 +23,7 @@ active_features['is_last'] = True
 # e.g. SALIENT a subj --> the obj.
 active_features['role_match'] = True
 active_features['use_det'] = True
-active_features['use_sal_ents'] = False
+active_features['use_sal_ents'] = True
 
 # Mark discourse connective transitions.
 active_features['discourse_connectives'] = True
@@ -84,18 +85,16 @@ class RushModel:
         #        bitstring digit corresponds to which salient entity.
         # NOTE: If num_salient_ents is 0 or use_sal_ents is False, these dicts
         # will be empty.
-        s2b, i2e = self._extract_salient_ents(doc, num_salient_ents)
-        self.sent2ent_bstr = s2b
-        self.idx2ent = i2e
-
-        self.sal_ents = set(i2e.values())
+        sal_ents, s2e = self._extract_salient_ents(doc, num_salient_ents)
+        self.sent2sal_ents = s2e
+        self.sal_ents = sal_ents
 
         # Update the model with the actual number of salient entities
         # found -- this could be less than specified in the num_salient_ents
         # argument. If there are no salient entities, set the value to 1,
         # indicating that the salient entity bitstring for each sentence, will
         # be a 1 bit string with value 0.
-        self._num_salient_ents = len(i2e) if len(i2e) > 0 else 1
+        self._num_salient_ents = len(sal_ents)
 
         # If we are using discourse connective features, make a dict mapping
         # sentence indices to the explicit discourse connective that occurs in
@@ -122,7 +121,10 @@ class RushModel:
         """
 
         if not use_expl_disc:
-            return defaultdict(lambda: '')
+            s2t = {}
+            for i, s in enumerate(doc):
+                s2t[i] = ''
+            return s2t
 
         s2t = {}
         for i, s in enumerate(doc):
@@ -154,72 +156,45 @@ class RushModel:
         nsents = len(doc)
 
         # Map sentences to a set of entities (Nouns) in that sentence.
-        s2ents = defaultdict(set)
+        s2ents = {}
 
         # Map entities to the number of occurrences of that entity in the
         # document.
-        ent_counts = defaultdict(int)
+        ent_counts = {}
 
         # Count noun phrase heads that occur in subject or object
         # dependencies.
         if nsalient > 0:
             for i, sent in enumerate(doc):
-
-                # Iterate through all dependencies in a sentence sent, puting
-                # salient tokens in a set -- this is done to avoice counting
-                # entities twice if they occurred in multiple relevant
-                # dependencies.
-                deps = set()
                 for rel in sent.deps:
                     if 'sub' in rel.type or 'obj' in rel.type:
                         if rel.dep.pos in ['NN', 'NNS', 'NNP', 'NNPS']:
                             ent = rel.dep.lem.lower().strip()
-                            deps.add((rel.dep.idx, ent))
-                for ent in deps:
-                    s2ents[i].add(ent[1])
-                    ent_counts[ent[1]] += 1
+                            if ent not in ent_counts:
+                                ent_counts[ent] = 1
+                            else:
+                                ent_counts[ent] += 1
+        
 
         # Select at most *nsalient* salient entities,
         # starting from most frequent.
         ent_list = sorted(ent_counts.items(), key=lambda x: x[1], reverse=True)
-        sal_ent_list = [ent[0] for ent in ent_list[0:nsalient] if ent[1] > 1]
+        sal_ent_list = [ent[0] for ent in ent_list if ent[1] > 1][0:nsalient]
+        sal_ent_set = set(sal_ent_list)
 
-        # Update nsalient as it might be less than specified if there are
-        # fewer salient entities.
-        nsalient = len(sal_ent_list)
+        for i, sent in enumerate(doc):
+            ents = set()
+            for rel in sent.deps:
+                if 'sub' in rel.type or 'obj' in rel.type:
+                    if rel.dep.pos in ['NN', 'NNS', 'NNP', 'NNPS']:
+                        ent = rel.dep.lem.lower().strip()
+                        if ent in sal_ent_set:
+                             ents.add(ent)
+            s2ents[i] = frozenset(ents)
 
-        # If we found no salient entities, or we set this value to 0
-        # initially, return the default dicts.
-        if nsalient == 0:
-            no_ents = Bits(1)
-            s2b = defaultdict(lambda: no_ents)
-            i2e = {}
-            return s2b, i2e
+        return sal_ent_set, s2ents
 
-        # Create a unique 'one-hot' bitstring for each salient entity and map
-        # the 'hot' digit to the corresponding entity.
-        i2e = {}
-        sal_ents = defaultdict(lambda: BitArray('0b'+('0'*nsalient)))
-        for i, ent in enumerate(sal_ent_list):
-            bstr = BitArray(nsalient)
-            bstr[i] = 1
-            sal_ents[ent] = bstr
-            i2e[i] = ent
 
-        # Create a bit string for each sentence where each digit in the
-        # bitstring indicates the presence (or absence) of a salient entity
-        # in the sentence. In other words, each sentence's bitstring is an
-        # ORing of the bitstrings of the salient entities in that sentence.
-        # Map sentence indices to the sentence bitstring.
-        s2b = {}
-        for s in range(nsents):
-            bits = Bits(nsalient)
-            for e in sal_ents.keys():
-                if e in s2ents[s]:
-                    bits = bits | sal_ents[e]
-            s2b[s] = bits
-
-        return s2b, i2e
 
     def __len__(self):
         return len(self.doc)
@@ -277,7 +252,7 @@ class RushModel:
             if self._active_feat.get('discourse_connectives', False):
                 self._f_discourse_connectives(idxs, fmap, transition)
             if self._active_feat.get('first_word', False):
-                self._f_first_word(idxs, fmap)
+                self._f_first_word(idxs, fmap, transition)
 
             if self._active_feat.get('syntax_lev1', False):
                 self._f_syntax_lev(idxs, fmap, transition, 1)
@@ -321,7 +296,10 @@ class RushModel:
             seq0 = 'END'
         else:
             seq0 = syn_sequence(self[idxs[0]].parse, depth)
-        fmap['{} -sl1-> {}'.format(seq1, seq0)] = 1
+        fmap['{} -sl{}-> {}'.format(seq1, depth, seq0)] = 1
+        fmap['__ -sl{}-> {}'.format(depth, seq0)] = 1
+        fmap['{} -sl{}-> __'.format(seq1, depth)] = 1
+
 
     def _f_discourse_new(self, idxs, fmap, transition,
                          is_first=False):
@@ -478,46 +456,63 @@ class RushModel:
         self._t.append([fstr, ((idxs[0], 0),
                                (idxs[0], 0))])
 
-    def _f_first_word(self, idxs, fmap):
-        if idxs[-1] == -1:
-            fstr = 'First Word: {}'.format(self[idxs[0]][0].lem.lower())
-            fmap[fstr] = 1
-            self._t.append([fstr, ((idxs[0], 0), (idxs[0], 0))])
-        elif idxs[0] < len(self):
-            w1 = self[idxs[0]][0].lem.lower()
-            w2 = self[idxs[1]][0].lem.lower()
-            fstr = '{} --> {}'.format(w2, w1)
-            fmap[fstr] = 1
-            self._t.append([fstr, ((idxs[0], 0), (idxs[1], 0))])
+    def _f_first_word(self, idxs, fmap, transition):
+        if transition.sents[1] == 'START':
+            word1 = 'START'
         else:
-            fstr = 'Last Word: {}'.format(self[idxs[1]][0].lem.lower())
-            fmap[fstr] = 1
-            self._t.append([fstr, ((idxs[1], 0), (idxs[1], 0))])
+            word1 = self[idxs[1]][0].lem.lower()
+ 
+        if transition.sents[0] == 'END':
+            word0 = 'END'
+        else:
+            word0 = self[idxs[0]][0].lem.lower()
+        fstr1 = u'First Word Trans: {} --> {}'.format(unicode(word1), unicode(word0))
+        fmap[fstr1] = 1
+        fstr2 = u'First Word Trans: __ --> {}'.format(unicode(word0))
+        fmap[fstr2] = 1
+        fstr3 = u'First Word Trans: {} --> __'.format(unicode(word1))
+        fmap[fstr3] = 1
+
+#        if idxs[-1] == -1:
+#            fstr = 'First Word: {}'.format(self[idxs[0]][0].lem.lower())
+#            fmap[fstr] = 1
+#            self._t.append([fstr, ((idxs[0], 0), (idxs[0], 0))])
+#        elif idxs[0] < len(self):
+#            w1 = self[idxs[0]][0].lem.lower()
+#            w2 = self[idxs[1]][0].lem.lower()
+#            fstr = '{} --> {}'.format(w2, w1)
+#            fmap[fstr] = 1
+#            self._t.append([fstr, ((idxs[0], 0), (idxs[1], 0))])
+#        else:
+#            fstr = 'Last Word: {}'.format(self[idxs[1]][0].lem.lower())
+#            fmap[fstr] = 1
+#            self._t.append([fstr, ((idxs[1], 0), (idxs[1], 0))])
 
     def _f_is_first(self, idxs, fmap, trans):
         if trans.pos == 1:
+           
             for k in fmap.keys():
                 val = fmap[k]
                 del fmap[k]
-                fmap[k+'is_first'] = val
+                fmap[k+' <is_first>'] = val
             for feat in self._t:
-                feat[0] = 'is_first ' + feat[0]
+                feat[0] = '<is_first> ' + feat[0]
 
     def _f_is_last(self, idxs, fmap, trans):
         if trans.pos == len(self) - 1:
             for k in fmap.keys():
                 val = fmap[k]
                 del fmap[k]
-                fmap[k+'is_last'] = val
+                fmap[k+' <is_last>'] = val
             for feat in self._t:
-                feat[0] = 'is_last ' + feat[0]
+                feat[0] = '<is_last> ' + feat[0]
 
     def gold_transitions(self):
         """
         Return the gold transitions for a problem instance.
         This only works for history size 2.
         """
-        s2b = self.sent2ent_bstr
+        s2e = self.sent2sal_ents
         s2t = self.sent2trans
 
         nsents = len(self)
@@ -526,28 +521,44 @@ class RushModel:
         prevs = labels[0:-1]
         currents = labels[1:]
 
-        bstr = Bits(self._num_salient_ents)
         conn = ''
 
         gold = []
 
         for i, (prev, current) in enumerate(itertools.izip(prevs, currents)):
-            bstr = bstr | s2b[(i-1)] if i > 0 else bstr
+            ents = ents.union(s2e[(i-1)]) if i > 0 else frozenset()
             conn = s2t[i-1] if i > 0 and s2t[i-1] != '' else conn
-            gold.append(Transition((current, prev), i, bstr, conn))
+            gold.append(Transition((current, prev), i, ents, conn))
         return gold
 
-    def ordering2str(self, indices):
+    def indices2str(self, indices):
         """
         Return the document as a string, where the sentences are
         ordered according to the index values in the list *indices*.
 
         indices -- a list of index values
         """
-        strs = []
+        txts = []
+        wrapper = textwrap.TextWrapper(subsequent_indent=u'        ')
         for i in indices:
-            strs.append(u'({})  {}'.format(i+1, unicode(self[i])))
-        return u'\n'.join(strs)
+            txts.append(u'({})  {}'.format(i+1, unicode(self[i])))
+        wrapped_txt = [wrapper.fill(txt) for txt in txts]
+
+        return u'\n'.join(wrapped_txt)
+    
+    def trans2str(self, transitions):
+        """
+        Return the document as a string, where the sentences are
+        ordered according to the set of *transitions*.
+
+        transitions -- A set or list of
+            discourse.hypergraph.Transition objects.
+        """
+        ord_trans = discourse.hypergraph.recover_order(transitions)
+        indices = [discourse.hypergraph.s2i(t.sents[0])
+                   for t in ord_trans
+                   if t.sents[0] != 'END']
+        return self.indices2str(indices)
 
     def hypergraph(self):
         """
