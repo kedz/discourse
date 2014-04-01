@@ -3,7 +3,6 @@ from collections import deque, defaultdict
 from discourse.hypergraph import s2i
 import discourse.gazetteers as gazetteers
 import itertools
-from bitstring import BitArray, Bits
 from discourse.hypergraph import Transition
 import discourse.hypergraph
 import nltk
@@ -18,16 +17,13 @@ active_features['is_first'] = True
 active_features['is_last'] = True
 
 # Mark role transitions (e.g. subj --> obj) of matching entities.
-# 'use_det' marks the determiner used for the entity (e.g. a subj --> the obj).
-# 'use_sal_ents' marks whether or not the entity in question is salient or not,
-# e.g. SALIENT a subj --> the obj.
 active_features['role_match'] = True
 active_features['use_det'] = True
 active_features['use_sal_ents'] = True
 
 # Mark discourse connective transitions.
 active_features['discourse_connectives'] = True
-# Mark the first occurence of a salient entity.
+# Mark the first occurence of a salient graph entity.
 active_features['discourse_new'] = True
 
 # Mark Tree Syntax sequences of depths 1&2
@@ -37,328 +33,427 @@ active_features['syntax_lev2'] = True
 # Mark first word to first word transitions.
 active_features['first_word'] = True
 
+# Mark counts of NE types from sentence to sentence.
+active_features['ne_types'] = True
+
+# Enable Debug mode -- the correct transitions are the only ones
+# that will be score. Do not turn this on unless you are debugging.
+active_features['debug'] = False
+
 # Explicit Discourse gazetteers for identifying expl disc tokens in a sentence.
 expl_disc = gazetteers.DiscourseConnectives()
 
 
-class RushModel:
+class BigramCoherenceInstance:
+    """ An bigram discourse coherence sequence mode instance for
+    predicting the correct order of sentences in a document.
 
-    def __init__(self, doc, history=2, features=active_features,
-                 num_salient_ents=4):
-        """
-        A discourse model for predicting coherent sentence orderings.
 
-        doc -- A corenlp.Document object.
+    Attributes
+    ----------
+    doc : corenlp.Document
+        A corenlp.Doucment object that has pos, ner tags, and
+        constituent and dependency parses for the problem
+        instance.
 
-        history -- This model takes into acount a sentence window of
-            size history (currently only 2 is supported).
+    active_feat : dict, string -> bool
+        A dict mapping feature names to boolean values, with True
+        indicating that a particular feature is being used.
 
-        features -- a dict mapping feature names to boolean values, with True
-            indicating that a particular feature is being used.
+    num_graph_entities : int
+        The number of salient entities to track in the model. This
+        number should probably not exceed 4 or the graph will blow
+        up. A salient entity is any noun that occurs more than once.
+        If this value is set to n, the model tracks the top n
+        entities by frequency, breaking ties arbitrarily. This
+        value is a maximum -- it is possible that a document has
+        fewer than n salient entities.
 
-        num_salient_entities -- The number of salient entities to track in the
-            model. This number should probably not exceed 4 or the graph will
-            blow up. A salient entity is any noun phrase head that occurs more
-            than once. If this value is set to n, the model tracks the top n
-            entities by frequency, breaking ties arbitrarily. This value is
-            a maximum -- it is possible that a document has fewer than n
-            salient entities.
-        """
+    entity_counts : dict (string -> int)
+        A dict mapping document noun strings to occurrence counts.
+
+    _f_cache : dict (Transition -> dict (string -> int))
+        This cache stores graph edge (i.e. transitions) feature maps
+        so that transition feautres need not be calculated more than
+        once.
+
+    graph_ents : frozenset (string)
+        The set of salient entities that will be used in graph
+        construction.
+
+    sent2ents : dict (int -> frozenset (string))
+        A mapping of sentence indices to the set of the graph entities
+        that sentence contains if any.
+
+    sent2dcon : dict (int -> string)
+        A mapping of sentence indices to an explicit discourse
+        connective if present in the corresponding sentence.
+        If the current model does not use the
+        'discourse_connectives' feature then this dict simply
+        maps all sentences to the empty string: ''
+
+    """
+
+    def __init__(self, doc, features=None, num_graph_entities=0):
+
         self.doc = doc
-        self.history = history
-        self._active_feat = features
-
-        # Sentence to sentence transition features are cached, since they are
-        # need repeatedly in decoding. This dict holds a Transitions feature
-        # map.
+        self.active_feat = active_features if features is None else features
+        self.entity_counts = self._build_entity_counts(doc)
         self._f_cache = {}
 
-        # If we are not using the salient ents feature, there is no reason to
-        # store information about salient entities, so this value is set to 0.
-        if not features.get('use_sal_ents', False):
-            num_salient_ents = 0
+        self.graph_ents, self.sent2ents = \
+            self._build_graph_ents(doc, num_graph_entities,
+                                   self.entity_counts)
 
-        # Extract two dicts related to salient entities:
-        # s2b -- a sentence index to salient entity bitstring map, indicating
-        #        the salient entities present in the sentence.
-        # i2e -- a bitstring digit to salient entity map, indicating which
-        #        bitstring digit corresponds to which salient entity.
-        # NOTE: If num_salient_ents is 0 or use_sal_ents is False, these dicts
-        # will be empty.
-        sal_ents, s2e = self._extract_salient_ents(doc, num_salient_ents)
-        self.sent2sal_ents = s2e
-        self.sal_ents = sal_ents
+        # Update the model with the actual number of salient graph entities
+        # found -- this could be less than specified in the num_graph_ents
+        # argument.
+        self.num_graph_entities = len(self.graph_ents)
 
-        # Update the model with the actual number of salient entities
-        # found -- this could be less than specified in the num_salient_ents
-        # argument. If there are no salient entities, set the value to 1,
-        # indicating that the salient entity bitstring for each sentence, will
-        # be a 1 bit string with value 0.
-        self._num_salient_ents = len(sal_ents)
+        use_expl_disc = self.active_feat.get('discourse_connectives', False)
+        self.sent2dcon = self._extract_expl_disc(doc, use_expl_disc)
 
-        # If we are using discourse connective features, make a dict mapping
-        # sentence indices to the explicit discourse connective that occurs in
-        # that sentence or the empty string if there is none.
-        # When this feature is false, the map always returns the empty string.
-        use_expl_disc = features.get('discourse_connectives', False)
-        self.sent2trans = self._extract_expl_disc(doc, use_expl_disc)
+    def _build_entity_counts(self, doc):
+        """ Build a dict of occurrence counts of noun tokens in this
+        instances's document.
+
+        Parameters
+        ----------
+        doc : corenlp.Document
+            The problem instance's document containing the sentences
+            to be ordered.
+
+        Returns
+        -------
+        counts : dict (string -> int)
+            A dict with occurrence counts for each noun used in the
+            document.
+        """
+
+        counts = {}
+        for s in doc:
+            for t in s:
+                if t.pos in [u'NN', u'NNS', u'NP', u'NPS']:
+                    lem = t.lem.lower()
+                    if lem not in counts:
+                        counts[lem] = 1
+                    else:
+                        counts[lem] += 1
+        return counts
 
     def _extract_expl_disc(self, doc, use_expl_disc):
-        """
-        Return a dict mapping sentence indices to the explicit discourse
-        connective the respective sentence containts, if any. When no
-        connective is present or use_expl_disc is False, return the empty
-        string.
+        """ Return a dict mapping sentence indices to the explicit
+        discourse connective the respective sentence containts, if
+        any. When no connective is present or use_expl_disc is False,
+        return the empty string.
 
-        Only checks the first four tokens in the sentence for a discourse
-        connective as these are more likely to have transition words that hold
-        across sentence, as opposed to within a sentence.
+        Only checks the first four tokens in the sentence for a
+        discourse connective as these are more likely to have
+        transition words that hold across sentence, as opposed to
+        within a sentence.
 
-        doc -- A corenlp.Document object.
+        Parameters
+        ----------
+        doc : corenlp.Document
 
-        use_expl_disc -- a boolean flag indicating whether or not this
+        use_expl_disc : bool
+            A flag indicating whether or not this
             feature is active.
+
+        Returns
+        -------
+            s2c : dict, corenlp.Sentence -> string
+            A dict mapping sentences to the first explicit discourse
+            connective, if any, in the first 5 words in the sentence.
         """
 
         if not use_expl_disc:
-            s2t = {}
+            s2c = {}
             for i, s in enumerate(doc):
-                s2t[i] = ''
-            return s2t
+                s2c[i] = ''
+            return s2c
 
-        s2t = {}
+        s2c = {}
         for i, s in enumerate(doc):
-            preamble = u' '.join(unicode(token) for token in s[0:4])
+            preamble = u' '.join(unicode(token) for token in s[0:5])
             t = expl_disc.contains_connective(preamble)
             if t is not None:
-                s2t[i] = t
+                s2c[i] = t
             else:
-                s2t[i] = ''
+                s2c[i] = ''
 
-        return s2t
+        return s2c
 
-    def _extract_salient_ents(self, doc, nsalient):
+    def _build_graph_ents(self, doc, num_entities, ent_counts):
+        """ Builds the set of graph entites that will be used in
+        graph construction as well as a mapping of sentence indices
+        to the graph entities that they contain, if any. Entities are
+        chosen in order of most frequent within the document. Ties
+        are broken arbitrarily.
+
+        Parameters
+        ----------
+        doc : corenlp.Document
+            The problem instance's document containing the sentences
+            to be ordered.
+
+        num_entities : int
+            The number of salient entities to use in graph
+            construction.
+
+        ent_counts : dict (string -> int)
+            A dict mapping noun strings to their occurrence counts.
+
+        Returns
+        -------
+        graph_ents : frozentset (string)
+            A set of noun strings corresponding to the salient\
+            entities used in graph construction for this problem
+            instance.
+
+        sent2ents : dict (int -> frozenset (string))
+            A dict mapping sentence indices to the set of graph
+            entities in that sentence, if any.
         """
-        Returns two dicts:
-        s2b -  a sentence index to salient entity bitstring map, indicating
-               the salient entities present in the sentence.
-        i2e -  a bitstring digit to salient entity map, indicating which
-               bitstring digit corresponds to which salient entity.
-        NOTE: If nsalient == 0, s2b will map any index to Bits(1),
-        i.e., a single bit with value 0, and i2e will be an empty dict.
 
-        doc -- a corenlp.Document object.
+        unsorted_ents = [item for item in ent_counts.items() if item[1] > 1]
+        sorted_ents = sorted(unsorted_ents, key=lambda x: x[1], reverse=True)
+        graph_ents = frozenset([entity for entity, count
+                                in sorted_ents[0:num_entities]])
 
-        nsalient -- The maximum number of salient entities to extract.
-        """
-
-        # The number of sentences in the document.
-        nsents = len(doc)
-
-        # Map sentences to a set of entities (Nouns) in that sentence.
-        s2ents = {}
-
-        # Map entities to the number of occurrences of that entity in the
-        # document.
-        ent_counts = {}
-
-        # Count noun phrase heads that occur in subject or object
-        # dependencies.
-        if nsalient > 0:
-            for i, sent in enumerate(doc):
-                for rel in sent.deps:
-                    if 'sub' in rel.type or 'obj' in rel.type:
-                        if rel.dep.pos in ['NN', 'NNS', 'NNP', 'NNPS']:
-                            ent = rel.dep.lem.lower().strip()
-                            if ent not in ent_counts:
-                                ent_counts[ent] = 1
-                            else:
-                                ent_counts[ent] += 1
-        
-
-        # Select at most *nsalient* salient entities,
-        # starting from most frequent.
-        ent_list = sorted(ent_counts.items(), key=lambda x: x[1], reverse=True)
-        sal_ent_list = [ent[0] for ent in ent_list if ent[1] > 1][0:nsalient]
-        sal_ent_set = set(sal_ent_list)
-
+        sent2ents = {}
         for i, sent in enumerate(doc):
-            ents = set()
-            for rel in sent.deps:
-                if 'sub' in rel.type or 'obj' in rel.type:
-                    if rel.dep.pos in ['NN', 'NNS', 'NNP', 'NNPS']:
-                        ent = rel.dep.lem.lower().strip()
-                        if ent in sal_ent_set:
-                             ents.add(ent)
-            s2ents[i] = frozenset(ents)
+            sent_ents = frozenset(token.lem.lower() for token in sent
+                                  if token.lem.lower() in graph_ents)
+            sent2ents[i] = sent_ents
 
-        return sal_ent_set, s2ents
-
-
-
-    def __len__(self):
-        return len(self.doc)
-
-    def __getitem__(self, index):
-        return self.doc[index]
-
-    def __iter__(self):
-        return iter(self.doc)
+        return graph_ents, sent2ents
 
     def gold_str(self):
-        """
-        Returns the correct sentence ordering as a string.
+        """ Returns the correct sentence ordering as a string.
+        E.g.
+            (0) This is sentence 0.
+            (1) And this is sentence one.
+            (2) Notice that our indices are in the correct order.
+            (3) This ordering is indicative of the gold ordering.
         """
         strs = [u'({})  {}'.format(i, unicode(s))
-                for (i, s) in enumerate(self, 1)]
+                for (i, s) in enumerate(self)]
         return u'\n'.join(strs)
 
     def feature_map(self, transition):
+        """ Build the feature map for this transition (i.e. graph
+        edge). If we have already constructed this map, return the
+        map in _f_cache.
+
+        Parameters
+        ----------
+
+        transition : Transition
+            A Transition object corrpesonding to the graph edge at
+            hand.
+
+        Returns
+        -------
+            fmap : dict (string -> int)
+            A dict mapping feature names to feature values for
+            graph edge that corresponds to transition.
         """
-        Return the feature map for a transition. Feature maps are
-        cached.
-
-        transition -- the graph transition, for which this function
-            extracts features.
-        """
-
-        nsents = len(self)
-
-        # Get the sentence indices for this transition.
-        idxs = [s2i(s, end=nsents) for s in transition]
-        key = tuple(idxs)
 
         # Check the cache if we have already created this transition's
         # feature map, otherwise create a new one.
-        if key not in self._f_cache:
+        if transition in self._f_cache:
+            fmap = self._f_cache[transition]
+            return fmap
 
-            # Holds feature info for visualition/debug
-            self._t = []
+        else:
 
             # Create an empty feature map for this transition.
             fmap = {}
 
             ### Call each feature function if active. ###
+            if self.active_feat.get('role_match', False):
+                self._f_role_match(fmap, transition)
 
-            if self._active_feat.get('role_match', False):
-                self._f_role_match(idxs, fmap,
-                                   transition,
-                                   use_det=self._active_feat.get('use_det',
-                                                                 False))
+            if self.active_feat.get('discourse_new', False):
+                self._f_discourse_new(fmap, transition)
 
-            if self._active_feat.get('discourse_new', False):
-                self._f_discourse_new(idxs, fmap, transition,
-                                      is_first=self._active_feat['is_first'])
-            if self._active_feat.get('discourse_connectives', False):
-                self._f_discourse_connectives(idxs, fmap, transition)
-            if self._active_feat.get('first_word', False):
-                self._f_first_word(idxs, fmap, transition)
+            if self.active_feat.get('discourse_connectives', False):
+                self._f_discourse_connectives(fmap, transition)
+            if self.active_feat.get('first_word', False):
+                self._f_first_word(fmap, transition)
 
-            if self._active_feat.get('syntax_lev1', False):
-                self._f_syntax_lev(idxs, fmap, transition, 1)
-            if self._active_feat.get('syntax_lev2', False):
-                self._f_syntax_lev(idxs, fmap, transition, 2)
+            if self.active_feat.get('syntax_lev1', False):
+                self._f_syntax_lev(fmap, transition, 1)
+            if self.active_feat.get('syntax_lev2', False):
+                self._f_syntax_lev(fmap, transition, 2)
 
-            if self._active_feat.get('is_first', False):
-                self._f_is_first(idxs, fmap, transition)
-            if self._active_feat.get('is_last', False):
-                self._f_is_last(idxs, fmap, transition)
+            if self.active_feat.get('ne_types', False):
+                self._f_ne_types(fmap, transition)
 
-            self._f_cache[key] = fmap
+            if self.active_feat.get(u'debug', False):
+                self._f_debug(fmap, transition)
+
+            self._f_cache[transition] = fmap
             return fmap
 
-        else:
+    def _f_debug(self, fmap, transition):
+        nsents = len(self.doc.sents)
+        head = s2i(transition[0], end=nsents)
+        tail = s2i(transition[1], end=nsents)
 
-            return self._f_cache[key]
+        if transition.position == head and tail + 1 == head:
+            fmap['DEBUG'] = 1
 
-    def _f_syntax_lev(self, idxs, fmap, transition, depth):
+    def _f_first_word(self, fmap, transition):
+        """ Marks the sequence first words of the sentences selected
+        by the graph edge *transition*.
+        E.g. 'a' ---> 'the' .
+
+        Parameters
+        ----------
+        fmap : dict (string -> int)
+            A dict mapping feature names to feature values
+            for this transition. This function mutates this dict.
+
+        transition : Transition
+            The graph edge, from which this function
+            extracts features.
         """
-        Marks the *depth* non-terminal sequence transition in the
+
+        # Extract first word from tail sentence.
+        if transition[1] == u'START':
+            word1 = u'START'
+            ne1 = u'START'
+        else:
+            idx = s2i(transition[1])
+            sent1 = self.doc[idx]
+            token1 = sent1.tokens[0]
+
+            word1 = token1.lem.lower()
+            ne1 = token1.ne
+
+        # Extract first word from head sentence.
+        if transition[0] == u'END':
+            word0 = u'END'
+            ne0 = u'END'
+        else:
+            idx = s2i(transition[0])
+            sent0 = self.doc[idx]
+            token0 = sent0.tokens[0]
+            word0 = token0.lem.lower()
+            ne0 = token0.ne
+
+        # Mark the feature
+        fstr1 = u'First Word Trans: {} --> {}'.format(word1, word0)
+        fmap[fstr1] = 1
+
+        # Mark smoothed versions of this feature.
+        fstr2 = u'First Word Trans: __ --> {}'.format(unicode(word0))
+        fmap[fstr2] = 1
+
+        fstr3 = u'First Word Trans: {} --> __'.format(unicode(word1))
+        fmap[fstr3] = 1
+
+        fstr4 = u'First Word Trans: {} --> {}'.format(ne1, ne0)
+        fmap[fstr4] = 1
+
+        fstr5 = u'First Word Trans: {} --> {}'.format(ne1, word0)
+        fmap[fstr5] = 1
+
+        fstr6 = u'First Word Trans: {} --> {}'.format(word1, ne0)
+        fmap[fstr6] = 1
+
+        fstr7 = u'First Word Trans: {} --> __'.format(ne1)
+        fmap[fstr7] = 1
+
+        fstr8 = u'First Word Trans: __ --> {}'.format(ne0)
+        fmap[fstr8] = 1
+
+    def _f_syntax_lev(self, fmap, transition, depth):
+        """ Marks the non-terminal sequence transition in the
         feature map. E.g. S , NP VP . ---> NP VP .
 
-        idxs -- the list of sentence indices in this transition in
-            order of head sentence to tail sentence.
+        Parameters
+        ----------
+        fmap : dict (string -> int)
+            A dict mapping feature names to feature values
+            for this transition. This function mutates this dict.
 
-        fmap -- a dict with feature values for this transition.
-
-        transition -- the graph transition, for which this function
+        transition : Transition
+            the graph transition, for which this function
             extracts features.
 
-        depth -- the depth of the sequence to extract from the parse
+        depth : int
+            The depth of the sequence to extract from the parse
             tree.
         """
 
-        if transition.sents[1] == 'START':
+        # Extract syntax sequence for the tail sentence.
+        if transition.sentences[1] == 'START':
             seq1 = 'START'
         else:
-            seq1 = syn_sequence(self[idxs[1]].parse, depth)
-        if transition.sents[0] == 'END':
+            idx = s2i(transition[1])
+            seq1_parse = self.doc[idx].parse
+            seq1 = syn_sequence(seq1_parse, depth)
+
+        # Extract syntax sequence for the head sentence.
+        if transition.sentences[0] == 'END':
             seq0 = 'END'
         else:
-            seq0 = syn_sequence(self[idxs[0]].parse, depth)
+            idx = s2i(transition[0])
+            seq0_parse = self.doc[idx].parse
+            seq0 = syn_sequence(seq0_parse, depth)
+
+        # Assign feature value.
         fmap['{} -sl{}-> {}'.format(seq1, depth, seq0)] = 1
+
+        # Smoothed features.
         fmap['__ -sl{}-> {}'.format(depth, seq0)] = 1
         fmap['{} -sl{}-> __'.format(seq1, depth)] = 1
 
-
-    def _f_discourse_new(self, idxs, fmap, transition,
-                         is_first=False):
-        """
-        Marks feature map if the tail sentence contains the first
+    def _f_discourse_new(self, fmap, transition):
+        """ Marks feature map if the head sentence contains the first
         occurrence of a salient entity, that is, a discourse new
         entity.
 
-        idxs -- the list of sentence indices in this transition in
-            order of head sentence to tail sentence.
+        Parameters
+        ----------
 
-        fmap -- a dict with feature values for this transition.
+        fmap : dict (string -> int)
+            A dict mapping feature names to feature values
+            for this transition. This function mutates this dict.
 
-        transition -- the graph transition, for which this function
+        transition : Transition
+            the graph transition, for which this function
             extracts features.
 
-        is_first -- an optional flag indicating whether or not to use
-            a distinguished feature for discourse new entities that
-            occur in the first position sentence.
         """
 
-        # If we are in the last position, it is impossible to have a discourse
-        # new entity, since by definition they occur at least more than once.
-        # Simply return.
-        if idxs[0] == len(self):
-            return
+        if transition.sentences[0] != u'END':
+            idx = s2i(transition.sentences[0])
 
-        s2b = self.sent2ent_bstr
-        i2e = self.idx2ent
+            s2e = self.sent2ents
+            num_new = 0
+            for ent in s2e[idx]:
+                if ent not in transition.previous_entities:
+                    num_new += 1
 
-        curr_bstr = s2b[idxs[0]]
-        prev_bstr = transition.prev_ents
-
-        disc_new_ents = set()
-
-        # Populate disc_new_ents with discourse new entities, if any.
-        for i in range(self._num_salient_ents):
-            if prev_bstr[i] == 0 and curr_bstr[i] == 1:
-                disc_new_ents.add(i2e[i])
-
-        # Mark features in fmap, and provide token level information
-        # for feature visualization/debug.
-        for t in self[idxs[0]]:
-            if t.lem.lower() in disc_new_ents:
-                if transition.pos == 0 and is_first:
-                    fstr = 'FIRST SENT - DISC NEW'
-                else:
-                    fstr = 'DISC NEW'
-                # Mark feature in the feature map.
-                fmap[fstr] = 1
-                # Mark feature token coordinates for visualization.
-                self._t.append([fstr, ((idxs[0], t.idx),
-                                       (idxs[0], t.idx))])
+            if num_new > 0:
+                fmap[u'Discourse New'] = num_new
 
     def _entity_roles(self, s):
-        """
-        Returns a set of entity, role tuples for a sentence s.
+        """ Returns a set of entity, role tuples for a sentence s.
 
-        s -- A corenlp.Sentence object.
+        Paramters
+        ---------
+        s : corenlp.Sentence
+            A sentence from this problem instance.
+
+        Returns
+        -------
+            s_ents : set (tuple(Token, string))
+            A set of word token, role label tuples.
         """
         s_ents = set()
         dtypes = ['csubj', 'csubjpass', 'dobj', 'iobj', 'nsubj', 'nsubjpass']
@@ -379,156 +474,214 @@ class RushModel:
                     s_ents.add((rel.dep, 'other'))
         return s_ents
 
-    def _f_role_match(self, idxs, fmap,
-                      transition, use_det=False):
-        """
-        Marks feature map if noun phrase heads match across sentence.
-        The feature takes the form of the dependency relation for the
-        entity in each sentence, and optionally the determiner used
-        and whether or not the entitiy in question is a salient
-        entity. E.g. 'SALIENT a nsubj --> the dobj'.
+    def _f_role_match(self, fmap, transition):
+        """ This feature counts noun phrase head matches across
+        sentences. The feature takes the form of the dependency
+        relation for the entity in each sentence, and whether or not
+        the entitiy in question is a salient entity.
+        E.g. 'nsubj --> dobj SALIENT'. Start and end role transitions
+        are similarly captured, e.g. 'START -> other' and
+        'iobj -> END'.
 
-        idxs -- the list of sentence indices in this transition in
-            order of head sentence to tail sentence.
+        Parameters
+        ----------
 
-        fmap -- a dict with feature values for this transition.
+        fmap : dict (string -> int)
+            A dict mapping feature names to feature values
+            for this transition. This function mutates this dict.
 
-        transition -- the graph transition, for which this function
+        transition : Transition
+            the graph transition, for which this function
             extracts features.
-
-        use_det -- an optional flag indicating whether or not to mark
-            the determiner of the entity.
         """
 
-        # If this is the first transition, or the last transition, there is
-        # nothing to mark. Simply return.
-        if idxs[0] == len(self):
-            return
-        if idxs[-1] == -1:
-            return
+        # If the tail sentence is START, create a START role for each entity
+        # that occurs in the head sentence.
+        if transition[1] == u'START':
+            idx0 = s2i(transition[0])
+            s0_ents = self._entity_roles(self.doc[idx0])
+            s1_ents = [(token, u'START') for token, role in s0_ents]
 
-        # Get entity, role tuples for each sentence.
-        s0_ents = self._entity_roles(self[idxs[0]])
-        s1_ents = self._entity_roles(self[idxs[1]])
+        # If the head sentence is END, create an END role for each entity
+        # that occurs in the tail sentence.
+        elif transition[0] == u'END':
+            idx1 = s2i(transition[1])
+            s1_ents = self._entity_roles(self.doc[idx1])
+            s0_ents = [(token, u'END') for token, role in s1_ents]
+
+        # Default behavior, extract entity role tuples for each sentence.
+        else:
+            idx0 = s2i(transition[0])
+            idx1 = s2i(transition[1])
+            s0_ents = self._entity_roles(self.doc[idx0])
+            s1_ents = self._entity_roles(self.doc[idx1])
+
+        # Entity counts
+        ecnts = self.entity_counts
+
+        # This set records entities matched in the head sentence.
+        # For entites in the head sentence that are NOT matched, this set
+        # makes it possible to create a feature of the form "X -> role"
+        # where the X indicates that the entitiy did not appear in the tail.
+        used_ents = set()
+
+        # This default dict is used to build the feature counts that will be
+        # added to fmap.
+        role_matches = defaultdict(int)
 
         # Find matching entities across sentences, and mark them as features.
-        for ent0 in s0_ents:
-            lem0 = ent0[0].lem.lower()
-            for ent1 in s1_ents:
-                lem1 = ent1[0].lem.lower()
-                if lem0 == lem1 or lem0 in lem1:
+        for ent1 in s1_ents:
+            lem1 = ent1[0].lem.lower()
+            is_salient = u'SALIENT' if ecnts[lem1] > 1 else u'not salient'
 
-                    if lem0 in self.sal_ents or lem1 in self.sal_ents:
-                        is_sal = 'SALIENT'
-                    else:
-                        is_sal = 'X'
+            #ne1 = ent1[0].ne
+            no_match = True
+            for ent0 in s0_ents:
+                lem0 = ent0[0].lem.lower()
+                if lem0 == lem1:
+                    no_match = False
+                    used_ents.add(lem0)
 
-                    det0 = 'X'
-                    det1 = 'X'
-                    if use_det:
-                        for rel in dgraph0.govs[ent0[0]]:
-                            if rel.type == 'det':
-                                det0 = rel.dep.lem.lower()
-                        for rel in dgraph1.govs[ent1[0]]:
-                            if rel.type == 'det':
-                                det1 = rel.dep.lem.lower()
+                    fstr1 = u'Role Trans: {} --> {}'.format(ent1[1], ent0[1])
+                    role_matches[fstr1] += 1
 
-                    fstr = u'{} {} {} --> {} {}'.format(is_sal,
-                                                        det1,
-                                                        ent1[1],
-                                                        det0,
-                                                        ent0[1])
+                    sfstr1 = fstr1 + u' {}'.format(is_salient)
+                    role_matches[sfstr1] += 1
 
-                    # Mark token level information for visualization/debug.
-                    self._t.append([fstr,
-                                    ((idxs[1], ent1[0].idx),
-                                     (idxs[0], ent0[0].idx))])
-                    # Mark the feature map.
-                    fmap[fstr] = 1
+                    # Backoff features with generic __ symbol
+                    fstr2 = u'Role Trans: __ --> {}'.format(ent0[1])
+                    role_matches[fstr2] += 1
 
-    def _f_discourse_connectives(self, idxs, fmap, transition):
-        if idxs[0] == len(self):
-            return
-        s2t = self.sent2trans
-        d0 = s2t[idxs[0]]
-        fstr = 'DISC {} --> {}'.format(transition.conn, d0)
-        fmap[fstr] = 1
-        self._t.append([fstr, ((idxs[0], 0),
-                               (idxs[0], 0))])
+                    sfstr2 = fstr2 + u' {}'.format(is_salient)
+                    role_matches[sfstr2] += 1
 
-    def _f_first_word(self, idxs, fmap, transition):
-        if transition.sents[1] == 'START':
-            word1 = 'START'
+                    fstr3 = u'Role Trans: {} --> __'.format(ent1[1])
+                    role_matches[fstr3] += 1
+
+                    sfstr3 = fstr3 + u' {}'.format(is_salient)
+                    role_matches[sfstr3] += 1
+
+            if no_match:
+                fstr1 = u'Role Trans: {} --> X'.format(ent1[1])
+                role_matches[fstr1] += 1
+                sfstr1 = fstr1 + u' {}'.format(is_salient)
+                role_matches[sfstr1] += 1
+
+        for ent, role in s0_ents:
+            lem = ent.lem.lower()
+            if lem not in used_ents:
+                is_salient = u'SALIENT' if ecnts[lem] > 1 else u'not salient'
+                fstr1 = u'Role Trans: X --> {}'.format(role)
+                role_matches[fstr1] += 1
+                sfstr1 = fstr1 + u' {}'.format(is_salient)
+                role_matches[sfstr1] += 1
+
+        for feature, val in role_matches.items():
+            fmap[feature] = val
+
+    def _f_discourse_connectives(self, fmap, transition):
+        if transition.sentences[0] == u'END':
+            dcon = u'END'
         else:
-            word1 = self[idxs[1]][0].lem.lower()
- 
-        if transition.sents[0] == 'END':
-            word0 = 'END'
-        else:
-            word0 = self[idxs[0]][0].lem.lower()
-        fstr1 = u'First Word Trans: {} --> {}'.format(unicode(word1), unicode(word0))
+            idx = s2i(transition.sentences[0])
+            dcon = self.sent2dcon[idx]
+
+        prev_dcon = transition.previous_dcon
+
+        fstr1 = u'Discourse Connective {} -> {}'.format(prev_dcon, dcon)
         fmap[fstr1] = 1
-        fstr2 = u'First Word Trans: __ --> {}'.format(unicode(word0))
+
+        fstr2 = u'Discourse Connective {} -> __'.format(prev_dcon)
         fmap[fstr2] = 1
-        fstr3 = u'First Word Trans: {} --> __'.format(unicode(word1))
+
+        fstr3 = u'Discourse Connective __ -> {}'.format(dcon)
         fmap[fstr3] = 1
 
-#        if idxs[-1] == -1:
-#            fstr = 'First Word: {}'.format(self[idxs[0]][0].lem.lower())
-#            fmap[fstr] = 1
-#            self._t.append([fstr, ((idxs[0], 0), (idxs[0], 0))])
-#        elif idxs[0] < len(self):
-#            w1 = self[idxs[0]][0].lem.lower()
-#            w2 = self[idxs[1]][0].lem.lower()
-#            fstr = '{} --> {}'.format(w2, w1)
-#            fmap[fstr] = 1
-#            self._t.append([fstr, ((idxs[0], 0), (idxs[1], 0))])
-#        else:
-#            fstr = 'Last Word: {}'.format(self[idxs[1]][0].lem.lower())
-#            fmap[fstr] = 1
-#            self._t.append([fstr, ((idxs[1], 0), (idxs[1], 0))])
+        is_match = u'MATCH' if dcon == prev_dcon else u'not a match'
+        fstr4 = u'Discourse Connective {}'.format(is_match)
+        fmap[fstr4] = 1
 
-    def _f_is_first(self, idxs, fmap, trans):
-        if trans.pos == 1:
-           
-            for k in fmap.keys():
-                val = fmap[k]
-                del fmap[k]
-                fmap[k+' <is_first>'] = val
-            for feat in self._t:
-                feat[0] = '<is_first> ' + feat[0]
+    def _ne_counts(self, sentence):
+        """ Return set of tag, count tuples of  the Named Entity tags
+        for a sentence."""
 
-    def _f_is_last(self, idxs, fmap, trans):
-        if trans.pos == len(self) - 1:
-            for k in fmap.keys():
-                val = fmap[k]
-                del fmap[k]
-                fmap[k+' <is_last>'] = val
-            for feat in self._t:
-                feat[0] = '<is_last> ' + feat[0]
+        ne_counts = defaultdict(int)
+        for token in sentence:
+            if token.ne != u'O':
+                ne_counts[token.ne] += 1
+        return set(ne_counts.items())
+
+    def _f_ne_types(self, fmap, transition):
+        """ Mark NE type transitions and counts.
+        E.g. NE Counts ORG_3 --> DATE_1
+
+        Parameters
+        ----------
+
+        fmap : dict (string -> int)
+            A dict mapping feature names to feature values
+            for this transition. This function mutates this dict.
+
+        transition : Transition
+            the graph transition, for which this function
+            extracts features.
+        """
+
+        if transition.sentences[1] == u'START':
+            sent1 = set([(u'START', 1)])
+            idx = s2i(transition.sentences[0])
+            sent0 = self._ne_counts(self.doc[idx])
+        elif transition.sentences[0] == u'END':
+            sent0 = set([(u'END', 1)])
+            idx = s2i(transition.sentences[1])
+            sent1 = self._ne_counts(self.doc[idx])
+        else:
+            idx1 = s2i(transition.sentences[1])
+            sent1 = self._ne_counts(self.doc[idx1])
+            idx0 = s2i(transition.sentences[0])
+            sent0 = self._ne_counts(self.doc[idx0])
+
+        if len(sent1) == 0:
+            sent1.add((u'X', 1))
+
+        if len(sent0) == 0:
+            sent0.add((u'X', 1))
+
+        for ne1 in sent1:
+            for ne0 in sent0:
+                fstr1 = u'NE Counts {}_{} --> {}_{}'.format(ne1[0], ne1[1],
+                                                            ne0[0], ne0[1])
+                fmap[fstr1] = 1
+
+                fstr2 = u'NE Counts {} --> {}'.format(ne1[0], ne0[0])
+                fmap[fstr2] = 1
+
+                fstr3 = u'NE Counts __ --> {}'.format(ne0[0])
+                fmap[fstr3] = 1
+
+                fstr4 = u'NE Counts {} --> __'.format(ne1[0])
+                fmap[fstr4] = 1
 
     def gold_transitions(self):
+        """ Return the gold transitions for a problem instance.
         """
-        Return the gold transitions for a problem instance.
-        This only works for history size 2.
-        """
-        s2e = self.sent2sal_ents
-        s2t = self.sent2trans
+        s2e = self.sent2ents
+        s2dcon = self.sent2dcon
 
-        nsents = len(self)
+        nsents = len(self.doc.sents)
         labels = ['START'] + ['sent-{}'.format(i) for i in range(nsents)] \
             + ['END']
         prevs = labels[0:-1]
         currents = labels[1:]
 
-        conn = ''
+        dcon = '__START__'
 
         gold = []
 
         for i, (prev, current) in enumerate(itertools.izip(prevs, currents)):
             ents = ents.union(s2e[(i-1)]) if i > 0 else frozenset()
-            conn = s2t[i-1] if i > 0 and s2t[i-1] != '' else conn
-            gold.append(Transition((current, prev), i, ents, conn))
+            dcon = s2dcon[i-1] if i > 0 and s2dcon[i-1] != '' else dcon
+            gold.append(Transition((current, prev), i, ents, dcon))
         return gold
 
     def indices2str(self, indices):
@@ -541,11 +694,11 @@ class RushModel:
         txts = []
         wrapper = textwrap.TextWrapper(subsequent_indent=u'        ')
         for i in indices:
-            txts.append(u'({})  {}'.format(i+1, unicode(self[i])))
+            txts.append(u'({})  {}'.format(i+1, unicode(self.doc[i])))
         wrapped_txt = [wrapper.fill(txt) for txt in txts]
 
         return u'\n'.join(wrapped_txt)
-    
+
     def trans2str(self, transitions):
         """
         Return the document as a string, where the sentences are
@@ -555,9 +708,9 @@ class RushModel:
             discourse.hypergraph.Transition objects.
         """
         ord_trans = discourse.hypergraph.recover_order(transitions)
-        indices = [discourse.hypergraph.s2i(t.sents[0])
+        indices = [discourse.hypergraph.s2i(t.sentences[0])
                    for t in ord_trans
-                   if t.sents[0] != 'END']
+                   if t.sentences[0] != 'END']
         return self.indices2str(indices)
 
     def hypergraph(self):
