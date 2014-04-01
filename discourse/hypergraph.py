@@ -86,7 +86,6 @@ def build_hypergraph(discourse_model, c):
                                         prev_node.dcon)
                 node_edge.append((prev_node, transition))
 
-
             c[next_node] = c.sum([c[prev_node] * c.sr(transition)
                                   for prev_node, transition in node_edge])
 
@@ -235,8 +234,6 @@ def build_constraints(transition):
     if transition[0] != u'END':
         cons.append((transition[0], 1))
     return cons
-
-
 
 
 def recover_order(transition_set):
