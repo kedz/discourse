@@ -28,7 +28,8 @@ class PerceptronTrainer:
         self.dsm = DiscourseSequenceModel(True)
         self.sp = StructuredPerceptron(self.dsm,
                                        verbose=(1 if verbose else 0),
-                                       max_iter=max_iter)
+                                       max_iter=max_iter,
+                                       average=True)
 
     def fit(self, trainX, trainY):
         import warnings
