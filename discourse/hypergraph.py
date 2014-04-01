@@ -14,7 +14,7 @@ def build_hypergraph(discourse_model, c):
 
     c : ChartBuilder
         A ChartBuilder object for contrsucting the instance graph.
-    
+
     Returns
     -------
     c : ChartBuilder
@@ -32,7 +32,7 @@ def build_hypergraph(discourse_model, c):
     # The set of non 'START' or 'END' sentence labels.
     node_labels = [u'sent-{}'.format(i) for i in range(positions)]
 
-    # The start node of the graph with label 'START' and position -1. 
+    # The start node of the graph with label 'START' and position -1.
     # Everyone has to start somewhere :)
     start_sent = Sentence(u'START', -1, dcon=u'__START__')
 
@@ -65,15 +65,15 @@ def build_hypergraph(discourse_model, c):
                 # This edge does not result in a legal path.
                 if node_label1 == node.label:
                     continue
-                
+
                 # Get the next salient entity set.
                 ents = s2e[s2i(node_label1)].union(node.entities)
-                
+
                 # If the next node's discourse connective is empty,
                 # use the previous node discourse connective.
                 if next_dcon == u'':
                     next_dcon = node.dcon
-                
+
                 s = Sentence(node_label1, position, ents, next_dcon)
                 n2e[s].add(node)
 
@@ -86,10 +86,10 @@ def build_hypergraph(discourse_model, c):
                                         prev_node.dcon)
                 node_edge.append((prev_node, transition))
 
- 
+
             c[next_node] = c.sum([c[prev_node] * c.sr(transition)
                                   for prev_node, transition in node_edge])
-            
+
         # Replace nodes with current position nodes.
         nodes = n2e.keys()
 
@@ -113,11 +113,11 @@ class Sentence:
     ----------
     label : string
         The current sentence label, possibly 'START, 'END',
-        or 'sent_i' where i is in {0, ..., n-1} and n is the number 
+        or 'sent_i' where i is in {0, ..., n-1} and n is the number
         of sentences in the problem instance.
 
     position : int
-        The position of this sentence node in the graph.              
+        The position of this sentence node in the graph.
 
     entities : frozenset
         A set of strings representing the salient entities in
@@ -125,7 +125,7 @@ class Sentence:
 
     dcon : string
         A discourse connective, if any, present in the sentence.
-        If there are no discourse connectives, the default 
+        If there are no discourse connectives, the default
         value is the empty string.
     """
     def __init__(self, label, position,
@@ -202,7 +202,7 @@ class Transition:
                                                 self.previous_entities,
                                                 self.previous_dcon,
                                                 self.position)
-                                                
+
     def __iter__(self):
         return iter(self.sentences)
 
@@ -218,7 +218,7 @@ class Transition:
 
 def build_constraints(transition):
     """ Build a constraint for a transition.
-    
+
     Parameters
     ----------
     transition : Transition
@@ -230,7 +230,7 @@ def build_constraints(transition):
         A list containing a 2-tuple of a sentence label string and
         the constraint value of 1.
     """
-    
+
     cons = []
     if transition[0] != u'END':
         cons.append((transition[0], 1))
@@ -246,7 +246,7 @@ def recover_order(transition_set):
 
     Parameters
     ----------
-    transition_set : set 
+    transition_set : set
         The set of Transitions predicted by an LP solver.
         This must be a valid path in the graph.
 
@@ -254,7 +254,7 @@ def recover_order(transition_set):
     -------
     ordered_trans : list
         A list of Transition objects in the order implied by the
-        path of the transitions through the graph.        
+        path of the transitions through the graph.
     """
     transitions = list(transition_set)
     ordered_trans = []
@@ -283,18 +283,18 @@ def recover_order(transition_set):
 
 
 def s2i(sent_label, end=None):
-    """ Convert a sentence label to its index. 'START' label 
-    returns -1. Optional argument end sets output for the 'END' 
+    """ Convert a sentence label to its index. 'START' label
+    returns -1. Optional argument end sets output for the 'END'
     label which defaults to None.
 
     Parameters
     ----------
-    sent_label : string 
+    sent_label : string
         A sentence label string, either 'START', 'END', or
         'sent_i' where i is the sentence index.
 
     end : Object
-        Optional argument specifying the output object for an 
+        Optional argument specifying the output object for an
         'END' label.
 
     Returns
