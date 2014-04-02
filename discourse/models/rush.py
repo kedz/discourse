@@ -649,8 +649,11 @@ class BigramCoherenceInstance:
 
         for ne1 in sent1:
             for ne0 in sent0:
-                fstr1 = u'NE Counts {}_{} --> {}_{}'.format(ne1[0], ne1[1],
-                                                            ne0[0], ne0[1])
+
+                count0 = ne0[1] if ne0[1] < 4 else '>=4'
+                count1 = ne1[1] if ne1[1] < 4 else '>=4'
+                fstr1 = u'NE Counts {}_{} --> {}_{}'.format(ne1[0], count1,
+                                                            ne0[0], count0)
                 fmap[fstr1] = 1
 
                 fstr2 = u'NE Counts {} --> {}'.format(ne1[0], ne0[0])
