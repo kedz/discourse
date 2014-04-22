@@ -13,13 +13,15 @@ class DiscourseSequenceModel(model.DynamicProgrammingModel):
         return None
 
     def constraints(self, discourse_model, hypergraph):
-        nsents = len(discourse_model)
-        return cons.Constraints(hypergraph,
+        nsents = len(discourse_model.doc.sents)
+        constraints = cons.Constraints(hypergraph,
                                 [('sent-{}'.format(i), -1)
-                                 for i in range(nsents)]).build(
-            hyper.build_constraints)
+                                 for i in range(nsents)])
+        constraints.from_vector([hyper.build_constraints(edge.label) 
+                                 for edge in hypergraph.edges])
+        return constraints
 
-    def factored_psi(self, discourse_model, transition, data):
+    def factored_joint_feature(self, discourse_model, transition, data):
         return discourse_model.feature_map(transition)
 
 
