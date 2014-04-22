@@ -7,6 +7,7 @@ from discourse.hypergraph import Transition
 import discourse.hypergraph
 import nltk
 import textwrap
+import discourse.data as data
 
 # These are the default features that are active
 active_features = {}
@@ -18,8 +19,10 @@ active_features['is_last'] = True
 
 # Mark role transitions (e.g. subj --> obj) of matching entities.
 active_features['role_match'] = True
-active_features['use_det'] = True
-active_features['use_sal_ents'] = True
+#active_features['use_det'] = True
+#active_features['use_sal_ents'] = True
+
+active_features['personal_pronoun_res'] = True
 
 # Mark discourse connective transitions.
 active_features['discourse_connectives'] = True
@@ -36,12 +39,22 @@ active_features['first_word'] = True
 # Mark counts of NE types from sentence to sentence.
 active_features['ne_types'] = True
 
+# Mark topic transitions -- requires a topic map for all documents.
+active_features['topics'] = True
+
+
+active_features['verbs'] = True
+
+#
+active_features['relative_position'] = True
+
 # Enable Debug mode -- the correct transitions are the only ones
 # that will be score. Do not turn this on unless you are debugging.
 active_features['debug'] = False
 
 # Explicit Discourse gazetteers for identifying expl disc tokens in a sentence.
 expl_disc = gazetteers.DiscourseConnectives()
+
 
 
 class BigramCoherenceInstance:
@@ -94,12 +107,14 @@ class BigramCoherenceInstance:
 
     """
 
-    def __init__(self, doc, features=None, num_graph_entities=0):
+    def __init__(self, doc, features=None,
+                 num_graph_entities=0, topic_map=None):
 
         self.doc = doc
         self.active_feat = active_features if features is None else features
         self.entity_counts = self._build_entity_counts(doc)
         self._f_cache = {}
+        self._topic_map = topic_map
 
         self.graph_ents, self.sent2ents = \
             self._build_graph_ents(doc, num_graph_entities,
@@ -133,7 +148,7 @@ class BigramCoherenceInstance:
         counts = {}
         for s in doc:
             for t in s:
-                if t.pos in [u'NN', u'NNS', u'NP', u'NPS']:
+                if t.pos in [u'NN', u'NNS', u'NNP', u'NNPS']:
                     lem = t.lem.lower()
                     if lem not in counts:
                         counts[lem] = 1
@@ -288,9 +303,31 @@ class BigramCoherenceInstance:
             if self.active_feat.get('syntax_lev2', False):
                 self._f_syntax_lev(fmap, transition, 2)
 
+            if self.active_feat.get('personal_pronoun_res', False):
+                self._f_personal_pronoun_res(fmap, transition)
+
             if self.active_feat.get('ne_types', False):
                 self._f_ne_types(fmap, transition)
 
+            if self.active_feat.get('verbs', False):
+                self._f_verbs(fmap, transition)
+            
+            if self.active_feat.get('topics', False):
+                self._f_topics(fmap, transition)
+
+            
+            if self.active_feat.get('relative_position', False):
+                self._f_relative_position(fmap, transition)
+
+            if self.active_feat.get('relative_position_qtr', False):
+                self._f_relative_position_qtr(fmap, transition)
+            
+            if self.active_feat.get('sentiment', False):
+                self._f_sentiment(fmap, transition)
+
+            if self.active_feat.get('topics_rewrite', False):
+                self._f_topics_rewrite(fmap, transition)
+            
             if self.active_feat.get(u'debug', False):
                 self._f_debug(fmap, transition)
 
@@ -305,6 +342,123 @@ class BigramCoherenceInstance:
         if transition.position == head and tail + 1 == head:
             fmap['DEBUG'] = 1
 
+
+    def _f_verbs(self, fmap, transition):
+        if transition[1] == u'START':
+            verbs1 = set([u'START'])
+        else:
+            idx = s2i(transition[1])
+            verbs1 = set([t.lem.lower() 
+                          for t in self.doc[idx] if u'VB' in t.pos])
+        if transition[0] == u'END':
+            verbs0 = set([u'END'])
+        else:
+            idx = s2i(transition[0])
+            verbs0 = set([t.lem.lower() 
+                          for t in self.doc[idx] if u'VB' in t.pos])
+
+        for v1 in verbs1:
+            for v0 in verbs0:
+                fstr1 = u'VBZ: {} --> {}'.format(v1, v0)
+                fmap[fstr1] = 1
+                
+                fstr2 = u'VBZ: __ --> {}'.format(v0)
+                fmap[fstr2] = 1
+ 
+                fstr3 = u'VBZ: {} --> __'.format(v1)
+                fmap[fstr3] = 1
+
+
+    def _f_sentiment(self, fmap, transition):
+        if transition[1] == u'START':
+            sentiment1 = u'START'
+            s1_value = u'0'
+        else:
+            idx = s2i(transition[1])
+            sentiment1 = self.doc[idx].sentiment
+            s1_value = self.doc[idx].sentiment_value
+        if transition[0] == u'END':
+            sentiment0 = u'END'
+            s0_value = u'0'
+        else:
+            idx = s2i(transition[0])
+            sentiment0 = self.doc[idx].sentiment
+            s0_value = self.doc[idx].sentiment_value
+
+        fstr1 = u'SENTIMENT {}:{} --> {}:{}'.format(sentiment1, s1_value,
+                                                    sentiment0, s0_value)
+        fmap[fstr1] = 1
+        
+        fstr2 = u'SENTIMENT {} --> {}'.format(sentiment1,
+                                              sentiment0)
+        fmap[fstr2] = 1
+
+        fstr3 = u'SENTIMENT {} --> __'.format(sentiment1)
+        fmap[fstr3] = 1
+
+        fstr4 = u'SENTIMENT __ --> {}'.format(sentiment0)
+        fmap[fstr4] = 1
+
+    def _f_relative_position(self, fmap, transition):
+        nsents = len(self.doc)
+        if transition[0] != 'END':
+            #idx = s2i(transition[0])
+            pos = (transition.position + 1) / float(nsents)
+            half = 'FIRST' if pos <= .5 else 'SECOND'
+            new_feats = []
+            for feat, value in fmap.iteritems():
+                new_feats.append((u'({} HALF) {}'.format(half, feat), value))  
+            for feat, value in new_feats:
+                fmap[feat] = value        
+
+    def _f_relative_position_qtr(self, fmap, transition):
+        nsents = len(self.doc)
+        if transition[0] != 'END':
+            #idx = s2i(transition[0])
+            per = (transition.position + 1) / float(nsents)
+            if per <= .25:
+                qtr = u'1Q'
+            elif per <= .5:
+                qtr = u'2Q'
+            elif per <= .75:
+                qtr = u'3Q'
+            else:
+                qtr = u'4Q'
+            new_feats = []
+            for feat, value in fmap.items():
+                new_feats.append((u'({} QTR) {}'.format(qtr, feat), value))  
+                #del fmap[feat]
+            for feat, value in new_feats:
+                fmap[feat] = value        
+
+
+    def _f_topics(self, fmap, transition):
+        if transition[1] == u'START':
+            topic1 = u'START'
+        else:
+            idx = s2i(transition[1])
+            topic1 = self._topic_map[idx]
+        if transition[0] == u'END':
+            topic0 = u'END'
+        else:
+            idx = s2i(transition[0])
+            topic0 = self._topic_map[idx]
+
+        fstr = u'TOPIC {} --> {}'.format(topic1, topic0)
+        fmap[fstr] = 1
+
+    def _f_topics_rewrite(self, fmap, transition):
+        if transition[0] == u'END':
+            topic0 = u'END'
+        else:
+            idx = s2i(transition[0])
+            topic0 = self._topic_map[idx]
+
+        for feat, val in fmap.items():
+            fstr = u'(TPC {}) {}'.format(topic0, feat)
+            fmap[fstr] = val
+
+ 
     def _f_first_word(self, fmap, transition):
         """ Marks the sequence first words of the sentences selected
         by the graph edge *transition*.
@@ -532,7 +686,7 @@ class BigramCoherenceInstance:
         # Find matching entities across sentences, and mark them as features.
         for ent1 in s1_ents:
             lem1 = ent1[0].lem.lower()
-            is_salient = u'SALIENT' if ecnts[lem1] > 1 else u'not salient'
+            is_salient = u'SALIENT' if ecnts[lem1] > 2 else u'not salient'
 
             #ne1 = ent1[0].ne
             no_match = True
@@ -570,14 +724,96 @@ class BigramCoherenceInstance:
         for ent, role in s0_ents:
             lem = ent.lem.lower()
             if lem not in used_ents:
-                is_salient = u'SALIENT' if ecnts[lem] > 1 else u'not salient'
+                is_salient = u'SALIENT' if ecnts[lem] > 2 else u'not salient'
                 fstr1 = u'Role Trans: X --> {}'.format(role)
                 role_matches[fstr1] += 1
                 sfstr1 = fstr1 + u' {}'.format(is_salient)
                 role_matches[sfstr1] += 1
 
         for feature, val in role_matches.items():
-            fmap[feature] = val
+            if 'SALIENT' in feature:
+                fmap[feature] = val
+
+    def _extract_personal_pronouns(self, sentence):
+        pronouns = [u'he', u'she', u'i']
+        return [t.lem.lower() for t in sentence if t.lem.lower() in pronouns]
+
+    def _extract_persons(self, sentence):
+        return [t.lem.lower() for t in sentence if t.ne == u'PERSON']
+
+    def _f_personal_pronoun_res(self, fmap, transition):
+        
+        ecnts = self.entity_counts
+        
+        if transition[0] == u'END':
+            prn0 = set([u'END'])
+            per0 = set([u'END'])
+        else:
+            idx0 = s2i(transition[0])
+            prn0 = self._extract_personal_pronouns(self.doc[idx0])
+            per0 = self._extract_persons(self.doc[idx0])
+
+        if transition[1] == u'START':
+            prn1 = set([u'START'])
+            per1 = set([u'START'])
+        else:
+            idx1 = s2i(transition[1])
+            prn1 = self._extract_personal_pronouns(self.doc[idx1])
+            per1 = self._extract_persons(self.doc[idx1])
+        
+        for prn in prn0:
+            if len(per1) > 0:
+                for per in per1:
+                    if per != u'START' and ecnts[per] > 1:
+                        is_salient = u'SALIENT'
+                    else: 
+                        is_salient = u'not salient'
+     
+                    fstr1 = u'Per. Prn.: PERSON --> {}'.format(per) 
+                    fmap[fstr1] = 1
+
+                    fstr2 = u'Per. Prn.: PERSON --> {} {}'.format(per,
+                                                                  is_salient) 
+                    fmap[fstr2] = 1
+                    
+                    fstr3 = u'Per. Prn.: PERSON --> prn'
+                    fmap[fstr3] = 1
+                    
+                    fstr4 = u'Per. Prn.: PERSON --> prn {}'.format(is_salient)
+                    fmap[fstr4] = 1
+
+            else: 
+                fstr1 = u'Per. Prn.: X --> {}'.format(prn)
+                fmap[fstr1] = 1
+                fstr2 = u'Per. Prn.: X --> prn'
+                fmap[fstr2] = 1
+
+        for prn in prn1:
+            if len(per0) > 0:
+                for per in per0:
+                    if per != u'END' and ecnts[per] > 1:
+                        is_salient = u'SALIENT'
+                    else: 
+                        is_salient = u'not salient'
+
+                    fstr1 = u'Per. Prn.: PERSON <-- {}'.format(per) 
+                    fmap[fstr1] = 1
+
+                    fstr2 = u'Per. Prn.: PERSON <-- {} {}'.format(per,
+                                                                  is_salient) 
+                    fmap[fstr2] = 1
+                    
+                    fstr3 = u'Per. Prn.: PERSON <-- prn'
+                    fmap[fstr3] = 1
+                    
+                    fstr4 = u'Per. Prn.: PERSON <-- prn {}'.format(is_salient)
+                    fmap[fstr4] = 1
+
+            else: 
+                fstr1 = u'Personal Prn: X <-- {}'.format(prn)
+                fmap[fstr1] = 1
+                fstr2 = u'Personal Prn: X <-- prn'
+                fmap[fstr2] = 1
 
     def _f_discourse_connectives(self, fmap, transition):
         if transition.sentences[0] == u'END':
@@ -587,6 +823,8 @@ class BigramCoherenceInstance:
             dcon = self.sent2dcon[idx]
 
         prev_dcon = transition.previous_dcon
+        if dcon == u'':
+            dcon = prev_dcon
 
         fstr1 = u'Discourse Connective {} -> {}'.format(prev_dcon, dcon)
         fmap[fstr1] = 1
@@ -649,8 +887,11 @@ class BigramCoherenceInstance:
 
         for ne1 in sent1:
             for ne0 in sent0:
-                fstr1 = u'NE Counts {}_{} --> {}_{}'.format(ne1[0], ne1[1],
-                                                            ne0[0], ne0[1])
+
+                count0 = ne0[1] if ne0[1] < 4 else '>=4'
+                count1 = ne1[1] if ne1[1] < 4 else '>=4'
+                fstr1 = u'NE Counts {}_{} --> {}_{}'.format(ne1[0], count1,
+                                                            ne0[0], count0)
                 fmap[fstr1] = 1
 
                 fstr2 = u'NE Counts {} --> {}'.format(ne1[0], ne0[0])
