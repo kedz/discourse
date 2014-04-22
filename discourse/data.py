@@ -7,10 +7,12 @@ import pandas as pd
 import re
 import corenlp as cnlp
 import cPickle
-import dill
+#import dill
+import discourse.topics as topics
+import os
 
 # Location of training and test for apws and ntsb corpora.
-_DATA_DIR = getenv("DISCOURSEDATA", ".")
+_DATA_DIR = getenv("DISCOURSE_DATA", ".")
 
 # Location of Brown Coherence Toolkit bin directory.
 _COHERENCE_BIN = getenv("BROWNCOHERENCEPATH", ".")
@@ -47,6 +49,13 @@ _RAW_TXT_NTSB_TEST = join(_DATA_DIR, 'raw', 'ntsb', 'test')
 # Serialized model directory.
 _MODEL_DIR = join(_DATA_DIR, 'models')
 
+_TOPIC_DIR = join(_DATA_DIR, 'topics')
+
+def topic_classifier(fname=None):
+    if fname is None:
+        fname = 'topics.txt'
+    path = os.path.join(_TOPIC_DIR, fname)
+    return topics.load_topics(path)
 
 def bigram_apws_model_names():
     model_fnames = []
