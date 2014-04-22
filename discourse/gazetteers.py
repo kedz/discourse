@@ -1,28 +1,29 @@
 from os import getenv
-from os.path import join
+from os.path import join, dirname
 import re
 
 male_fnames = None
 female_fnames = None
 
+exp_disc_file = join(dirname(__file__),
+                     u'resources', u'explicit_disc.txt')
 
 class DiscourseConnectives:
     def __init__(self):
         ellipses = []
         no_ellipses = []
 
-        fname = join(getenv('DISCOURSEDATA', '.'),
-                     'gazetteers', 'explicit_disc.txt')
-        f = open(fname, 'r')
+        f = open(exp_disc_file, 'r')
         for line in f:
-            if '...' not in line:
+            if u'...' not in line:
                 no_ellipses.append(line.strip())
             else:
-                splits = line.strip().split('...')
-                restr = '.*?'.join(['({})'.format(s.strip()) for s in splits])
+                splits = line.strip().split(u'...')
+                restr = u'.*?'.join([u'({})'.format(s.strip())
+                                     for s in splits])
                 ellipses.append(restr)
         f.close()
-        self.p2 = re.compile(r'\b({})\b'.format('|'.join(no_ellipses)), re.I)
+        self.p2 = re.compile(r'\b({})\b'.format(u'|'.join(no_ellipses)), re.I)
 
         self.p1 = [re.compile(restr, re.I) for restr in ellipses]
 
