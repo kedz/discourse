@@ -3,8 +3,9 @@ from discourse.hypergraph import s2i, recover_order
 import discourse
 from collections import OrderedDict
 import textwrap
-from discourse.models.rush import RushModel
+from discourse.models.rush import BigramCoherenceInstance
 import scipy as sp
+import pandas as pd
 
 def explain_predicted(test_docs, predy, model, feats):
 
@@ -239,16 +240,28 @@ def explain_transition(transition, model, testx):
     weights = model.dsm._vec.inverse_transform(model.sp.w)[0]
 
     feats = model.dsm._vec.inverse_transform(
-        model.dsm.psi(testx, [transition]))[0].keys()
+        model.dsm.joint_feature(testx, [transition]))[0].keys()
 
     # Print baseline model features for this transition and their score
     # under the baseline and new model.
 
-    print 'FEATURE                             | WEIGHT'
+#    output = u''
+#    output += u'FEATURE                             | WEIGHT\n'
+#    output += u'--------------------------------------------\n'
+    
+    points = []
     for feat in feats:
-        w = weights[feat] if feat in weights else '?'
-        print u'{:35} | {:3}'.format(feat, w)
-    print
+        w = weights[feat] if feat in weights else 0.0
+        points.append((feat, w))
+        #output += u'{:35} | {:3}\n'.format(feat, w)
+
+    points.sort(key=lambda x: x[0])
+    indices = (point[0] for point in points)
+    data = [[point[1]] for point in points]
+    df = pd.DataFrame(data, index=indices)
+    
+    #output += u'\n'
+    return df
 
 
 def compare_model(t, baseline_model, new_model, testdoc, base_feats, new_feats):
@@ -351,7 +364,7 @@ def kendalls_tau(transitions):
     returns (kt, pval)
     """
     # Get list sentence indices implied by the transition set.
-    indices = [s2i(t.sents[0]) for t in recover_order(transitions)[:-1]]
+    indices = [s2i(t.sentences[0]) for t in recover_order(transitions)[:-1]]
     # Get gold indices.
     gold = [i for i in range(len(indices))]
     # Compute Kendall's tau for these two sequences.
@@ -394,7 +407,7 @@ def bigram_acc(transitions):
     """
     ntrans = len(transitions)
     # Get predicted bigrams.
-    pred_bg = set([(s2i(t.sents[1]), s2i(t.sents[0], end='end'))
+    pred_bg = set([(s2i(t.sentences[1]), s2i(t.sentences[0], end='end'))
                    for t in recover_order(transitions)])
 
     # Create gold bigrams.
@@ -408,6 +421,34 @@ def bigram_acc(transitions):
     nbigrams = len(gold)
     acc = len(pred_bg & gold) / float(nbigrams)
     return acc
+
+
+def avg_oso_acc(dataY):
+
+    ndata = len(dataY)
+
+    # If dataY is empty, return None, else return avg acc.
+    if ndata == 0:
+        return None
+    sum_acc = 0
+    for y in dataY:
+        acc = oso_acc(y)
+        sum_acc += acc
+    avg_acc = sum_acc / float(ndata)
+    return avg_acc
+
+
+
+def oso_acc(transitions):
+
+    ntrans = len(transitions)
+    # Get predicted bigrams.
+    pred = [s2i(t.sentences[0], end=ntrans-1)
+               for t in recover_order(transitions)]
+    if tuple(pred) == tuple([i for i in range(ntrans)]):
+        return 1
+    else:
+        return 0
 
 
 def _position2transition_map(transitions):
