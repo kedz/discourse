@@ -4,6 +4,7 @@ from math import sqrt
 
 Sentence = namedtuple('Sentence', ['unigrams', 'bigrams', 'trigrams', 'half'])
 
+
 def load_topics(fname):
     data = []
 
@@ -61,25 +62,21 @@ stopwords = set(["the", "a", "an", "'s", "had", "have", "has", "were",
                  ":", "!", "?", "*", "+", "/", "(", ")", ",[", "]", "\"",
                  "'", "`", "''", "``"])
 
-def filter_unigrams(sent):
+def filter_tokens(cnlp_sentence):
 
     valid_lemmas = []
-    for t in sent:
+    for t in cnlp_sentence:
         if t.ne != 'O':
             valid_lemmas.append(t.ne)
         elif unicode(t).lower() not in stopwords:
             valid_lemmas.append(t.lem.lower())
     return valid_lemmas
 
-def unigrams(sent):
-    ugrm = set()
-    for word in filter_unigrams(sent):
-        ugrm.add(word)
-    return frozenset(ugrm)
+def unigrams(tokens):
+    return frozenset(tokens)
         
 def bigrams(tokens):
     bgrm = set()
-    #tokens = filter_unigrams(sent) 
     ntokens = len(tokens)
     
     for i in range(ntokens - 1):
@@ -90,7 +87,6 @@ def bigrams(tokens):
 
 def trigrams(tokens):
     tgrm = set()
-#    tokens = filter_unigrams(sent)
     ntokens = len(tokens)
     
     for i in range(ntokens - 2):
@@ -99,4 +95,3 @@ def trigrams(tokens):
         t3 = tokens[i + 2]
         tgrm.add(u'{} {} {}'.format(t1, t2, t3))
     return frozenset(tgrm)
-
