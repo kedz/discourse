@@ -29,7 +29,7 @@ def build_topic_mapper(topic_classifier, k):
         mapping = {}
         nsents = len(doc)
         for i, s in enumerate(doc):
-            words = topics.filter_unigrams(s)
+            words = topics.filter_tokens(s)
             instance = topics.make_instance(words, i, nsents)
             mapping[i] = topic_classifier(instance, k)
         return mapping
@@ -51,7 +51,7 @@ def main():
     tpc_file = d['topic_file']
 
     if tpc_file is not None: 
-        topic_classifier = data.topic_classifier(tpc_file)
+        topic_classifier = topics.load_topics(tpc_file)
         train_topic_mapper = build_topic_mapper(topic_classifier, 1)
         test_topic_mapper = build_topic_mapper(topic_classifier, 1)
     else:
