@@ -237,7 +237,7 @@ def eval_against_baseline(testX, baselineY, newY, baseline_model, new_model,
 
 
 def explain_transition(transition, model, testx):
-    weights = model.dsm._vec.inverse_transform(model.sp.w)[0]
+    weights = model.dsm._vec.inverse_transform(model.learner.w)[0]
 
     feats = model.dsm._vec.inverse_transform(
         model.dsm.joint_feature(testx, [transition]))[0].keys()
@@ -293,9 +293,9 @@ def compare_model(t, baseline_model, new_model, testdoc, base_feats, new_feats):
 
     # Get each model's weight vector.
     bl_weights = baseline_model.dsm._vec.inverse_transform(
-        baseline_model.sp.w)[0]
+        baseline_model.learner.w)[0]
     new_weights = new_model.dsm._vec.inverse_transform(
-        new_model.sp.w)[0]
+        new_model.learner.w)[0]
 
     # Get baseline and new model features for this transition t.
     bl_feat = set(baseline_model.dsm._vec.inverse_transform(
