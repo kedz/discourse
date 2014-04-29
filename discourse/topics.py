@@ -18,7 +18,7 @@ def load_topics(fname):
                     sequences.append(sequence)
                 sequence = []
             else:                
-                topic, text = line.split(u'_@@_')
+                topic, text = line.split(u'\t')
                 topic = topic.strip()
                 text = text.strip().split(u' ')
                 #print topic, text
