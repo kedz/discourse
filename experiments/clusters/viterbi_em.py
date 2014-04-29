@@ -16,7 +16,7 @@ def main():
     last_avg_ll = float('+inf')
     while delta > 0.00001:
     
-        ofile = ofile_template.repace('.txt', '_{}.txt'.format(iteration))
+        ofile = ofile_template.replace('.txt', '_{}.txt'.format(iteration))
 
         print u'Reading state transition counts from {}'.format(trainfile)
         states, Q = make_transition_table(trainfile, state_smoothing_parameter)
