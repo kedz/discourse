@@ -173,9 +173,15 @@ def main():
 
     for feats, num_graph_ents, pfile in settings:
         if tpc_file is not None:
-            pfile = u'{}_{}'.format(tpc_file.replace(u'.txt', u''), pfile)
-        print u'Training {}...'.format(pfile)
+            tpc_basename = os.path.basename(tpc_file.replace(u'.txt', u''))
+            pfile = u'{}_{}'.format(tpc_basename, pfile)
         
+        outfile = os.path.join(outdir, pfile)
+        if os.path.exists(outfile):
+            print u'{} already exists, moving on...'.format(outfile)
+            continue
+        
+        print u'Training {}...'.format(pfile)
         trainX, gold_trainY = make_data(feats, traindocs, num_graph_ents,
                                         train_topic_mapper)
         testX, gold_testY = make_data(feats, testdocs, num_graph_ents,
@@ -183,7 +189,6 @@ def main():
         model = fit_model(trainX, gold_trainY)
 
         print u'Pickling model and data...'
-        outfile = os.path.join(outdir, pfile)
         with open(outfile, 'wb') as f:
             pickle.dump({'model': model,
                          'features': feats,
@@ -200,7 +205,7 @@ def build_topic_mapper(topic_classifier, k):
         mapping = {}
         nsents = len(doc)
         for i, s in enumerate(doc):
-            words = topics.filter_unigrams(s)
+            words = topics.filter_tokens(s)
             instance = topics.make_instance(words, i, nsents)
             mapping[i] = topic_classifier(instance, k)
         return mapping
