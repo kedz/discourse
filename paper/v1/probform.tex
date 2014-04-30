@@ -1,0 +1,224 @@
+\documentclass[11pt]{article}
+\usepackage{times}
+\usepackage{url}
+\usepackage{latexsym}
+\usepackage{amssymb,amsmath,indentfirst}
+\usepackage{booktabs}
+\usepackage[version=0.96]{pgf}
+\usepackage{tikz}
+\usetikzlibrary{arrows,shapes,snakes,automata,backgrounds,petri}
+%\usepackage[latin1]{inputenc}
+\usepackage{verbatim}
+
+\begin{document}
+\begin{figure*}[h]
+\begin{tikzpicture}[node distance=2cm,>=stealth',bend angle=45,auto]
+
+  \tikzstyle{place}=[circle,thick,draw=blue!75,fill=blue!20,minimum size=6mm]
+  \tikzstyle{red place}=[place,draw=red!75,fill=red!20]
+  \tikzstyle{transition}=[rectangle,thick,draw=black!75,font=\tiny,
+              fill=black!20,minimum size=12mm]
+
+  \tikzstyle{every label}=[red]
+
+  \begin{scope}
+    % First net
+
+
+    \node [transition] (sOm)  {$s_\Omega$};
+    
+    \node [] (sdn) [left of=sOm] {\huge$\vdots$};    
+    \node [transition] (s2n) [above of=sdn] {$s_{2,n}$}
+        edge [post,bend right,out=45,in=225] (sOm);
+    \node [transition] (s1n) [above of=s2n] {$s_{1,n}$}
+        edge [post,bend right,out=60,in=237] (sOm);
+    
+    
+    %\node [transition] (s2n) [below of=s1n] {$s_{2,n}$};
+%        edge [post,bend left,out=-45] (s1n)
+%        edge [post,bend left,out=-45] (s2n);
+    
+    \node [transition] (s3n) [below of=sdn] {$s_{n-1,n}$}
+        edge [post,bend right,out=-50,in=130] (sOm);
+    
+    \node [transition] (s4n) [below of=s3n] {$s_{n,n}$}
+        edge [post,bend right,out=-60,in=110] (sOm);
+
+    \node [transition] (s1n1) [left of=s1n]  {$s_{1,n-1}$}
+        edge [post,bend left,out=0, in=180] (s1n)
+        edge [post,bend left,out=45, in=225] (s2n);
+
+    \node [transition] (s2n1) [below of=s1n1] {$s_{2,n-1}$}
+        edge [post,bend left,out=-45, in=130] (s1n)
+        edge [post,bend right,out=0, in=180] (s2n);
+    
+    \node [] (sdn1) [below of=s2n1] {\huge$\vdots$};    
+    
+    \node [transition] (s3n1) [below of=sdn1] {$s_{n-1,n-1}$}
+        edge [post,bend left,out=0, in=180] (s3n)
+        edge [post,bend left,out=45, in=225] (s4n);
+    
+    \node [transition] (s4n1) [below of=s3n1] {$s_{n,n-1}$}
+        edge [post,bend left,out=-45, in=130] (s3n)
+        edge [post,bend right,out=0, in=180] (s4n);
+
+    \node [] (scdots1) [left of=s1n1] {$\cdots$}
+        edge [post,bend left,out=0, in=180] (s1n1)
+        edge [post,bend left,out=45, in=225] (s2n1);
+        
+    \node [] (scdots2) [below of=scdots1] {$\cdots$}
+        edge [post,bend left,out=-45, in=130] (s1n1)
+        edge [post,bend right,out=0, in=180] (s2n1);
+
+
+    \node [] (svdots) [below of=scdots2] {\huge$\ddots$};    
+
+    \node [] (scdots3) [below of=svdots] {$\cdots$}    
+        edge [post,bend left,out=0, in=180] (s3n1)
+        edge [post,bend left,out=45, in=225] (s4n1);
+    \node [] (scdots4) [below of=scdots3] {$\cdots$}
+        edge [post,bend right,out=-45, in=135] (s3n1)
+        edge [post,bend right,out=0, in=180] (s4n1);
+
+    \node [transition] (s12) [left of=scdots1]  {$s_{1,2}$}
+        edge [post,bend left,out=0, in=180] (scdots1)
+        edge [post,bend left,out=45, in=225] (scdots2);
+
+    \node [transition] (s22) [below of=s12] {$s_{2,2}$}
+        edge [post,bend left,out=-45, in=130] (scdots1)
+        edge [post,bend right,out=0, in=180] (scdots2);
+    
+    \node [] (sd2) [below of=s22] {\huge$\vdots$};    
+    
+    \node [transition] (s32) [below of=sd2] {$s_{n-1,2}$}
+        edge [post,bend left,out=0, in=180] (scdots3)
+        edge [post,bend left,out=45, in=225] (scdots4);
+    
+    \node [transition] (s42) [below of=s32] {$s_{n,2}$}
+        edge [post,bend right,out=-45, in=135] (scdots3)
+        edge [post,bend right,out=0, in=180] (scdots4);
+
+    \node [transition] (s11) [left of=s12]  {$s_{1,1}$}
+        edge [post,bend left,out=0, in=180] (s12)
+        edge [post,bend left,out=45, in=225] (s22);
+
+    \node [transition] (s21) [below of=s11] {$s_{2,1}$}
+        edge [post,bend left,out=0, in=180] (s22)
+        edge [post,bend right,out=-45, in=135] (s12);
+    
+    \node [] (sd1) [below of=s21] {\huge$\vdots$};    
+    
+    \node [transition] (s31) [below of=sd1] {$s_{n-1,1}$}
+        edge [post,bend left,out=0, in=180] (s32)
+        edge [post,bend left,out=45, in=225] (s42);
+    
+    \node [transition] (s41) [below of=s31] {$s_{n,1}$}
+        edge [post,bend right,out=-45, in=135] (s32)
+        edge [post,bend right,out=0, in=180] (s42);
+
+    \node [transition] (sa) [left of=sd1] {$s_\alpha$}
+        edge [post,bend left,out=-45] (s11)
+        edge [post,bend left,out=-45] (s21)
+        edge [post,bend right,out=45] (s31)
+        edge [post,bend right,out=45] (s41);
+
+    \path (sd2) -- (svdots) node[midway] (sd2c) {$\vdots$}
+        edge [bend left,out=0, in=-110] (s12)
+        edge [bend left,out=0, in=-120] (s22)
+        edge [post,bend right,out=0, in=110] (scdots1)
+        edge [post,bend right,out=0, in=115] (scdots2)
+        edge [bend left,out=0, in=115] (s32)
+        edge [bend left,out=0, in=105] (s42)
+        edge [post,bend right,out=0, in=-110] (scdots3)
+        edge [post,bend right,out=0, in=-110] (scdots4);
+    \path (sd1) -- (sd2) node[midway] (sd12) {$\vdots$}
+        edge [bend left,out=0, in=-110] (s11)
+        edge [bend left,out=0, in=-120] (s21)
+        edge [post,bend right,out=0, in=110] (s12)
+        edge [post,bend right,out=0, in=115] (s22)
+        edge [bend left,out=0, in=115] (s31)
+        edge [bend left,out=0, in=105] (s41)
+        edge [post,bend right,out=0, in=-110] (s32)
+        edge [post,bend right,out=0, in=-110] (s42);
+    \path (sdn1) -- (sdn) node[midway] (sd1n) {$\vdots$}
+        edge [bend left,out=0, in=-110] (s1n1)
+        edge [bend left,out=0, in=-120] (s2n1)
+        edge [post,bend right,out=0, in=110] (s1n)
+        edge [post,bend right,out=0, in=115] (s2n)
+        edge [bend left,out=0, in=115] (s3n1)
+        edge [bend left,out=0, in=105] (s4n1)
+        edge [post,bend right,out=0, in=-110] (s3n)
+        edge [post,bend right,out=0, in=-110] (s4n);
+    \path (svdots) -- (sdn1) node[midway] (svb) {$\vdots$}
+        edge [bend left,out=0, in=-110] (scdots1)
+        edge [bend left,out=0, in=-120] (scdots2)
+        edge [post,bend right,out=0, in=110] (s1n1)
+        edge [post,bend right,out=0, in=115] (s2n1)
+        edge [bend left,out=0, in=115] (scdots3)
+        edge [bend left,out=0, in=105] (scdots4)
+        edge [post,bend right,out=0, in=-110] (s3n1)
+        edge [post,bend right,out=0, in=-110] (s4n1);
+
+
+
+  \end{scope}
+
+%  \draw [-to,thick,snake=snake,segment amplitude=.4mm,
+%         segment length=2mm,line after snake=1mm]
+%    ([xshift=5mm]s -| l1) -- ([xshift=-5mm]s1' -| e1')
+%    node [above=1mm,midway,text width=3cm,text centered]
+%      {replacement of the \textcolor{red}{capacity} by 
+%        \textcolor{red}{two places}};
+
+%  \begin{pgfonlayer}{background}
+%    \filldraw [line width=4mm,join=round,black!10]
+%      (w1.north  -| l1.east)  rectangle (w2.south  -| e1.west)
+%      (w1'.north -| l1'.east) rectangle (w2'.south -| e1'.west);
+%  \end{pgfonlayer}
+\end{tikzpicture}
+\end{figure*}
+
+%For each position in the lattice we have sentence variables
+%\begin{equation}
+%s_{p,i} \in \{0,1\}, \forall p,i = 1,\ldots, n,
+%\end{equation}
+
+%where $s_{p,i}$ indicates selecting the $i^\textrm{th}$ sentence for position $p$. 
+
+Between each sentence node at position $p$ and $p+1$ there exist edge variables 
+\begin{equation}
+t_{p,i,j} \in \{0, 1\}, \forall p,i,j = 1,\ldots, n,
+\end{equation}
+where $t_{p,i,j}$ indicates selecting the edge $(s_{p,i}, s_{p+1,j})$.
+
+Additionally, we have a set of weights $\Theta_{p,i,j} \in \mathcal{R}$ associated with each $t_{p,i,j}$ that represent our model's belief about the coherence of placing $s_{p,i}$ before $s_{p+1,j}$.
+
+We formulate the ILP as follows:
+
+\begin{equation}
+\begin{split}
+\max \sum_p \sum_i \sum_j \Theta_{p,i,j} t_{p,i,j}\\
+s.t. & \sum_i t_{p,i,j} = 1, \forall p,j = 1,\ldots,n\\
+     &  \sum_j t_{p,i,j} = 1, \forall p,i = 1,\ldots,n\\
+     & \sum_p \sum_i t_{p,i,j} = 1, \forall j = 1,\ldots, n
+\end{split}
+\end{equation}
+
+
+When doing loss augmented inference with Kendall's $\tau$ as our loss function, we have an additional objective function and set of constraints. We introduce a set of variables 
+\begin{equation}
+y_{p,i} \in \{0,1\}, \forall p,i = 1,\ldots,n 
+\end{equation}
+where $y_{p,i}$ indicates that the $i^{\textrm{th}}$ sentence was selected for position $p$.
+We calculate the number of order violations for each assignment, and in doing so incorporate Kendall's $\tau$ loss into our inference, with the following objective and constraints
+\begin{equation}
+\begin{split}
+\max \sum_{i=1}^n \sum_{j=1}^{i-1}\sum_{p=1}^n y_{p,i} \sum_{p^\prime = p+1}^n y_{p^\prime, j}\\
+s.t. &\;  y_{p,j} = \sum_{i=1}^n t_{p,i,j} \forall p,j = 1,\ldots, n
+\end{split}
+\end{equation}
+
+%\sum_i^n t_{p,i,j}, \forall p,j = 1,\cdots, n
+
+
+\end{document}
