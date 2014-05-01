@@ -1,4 +1,5 @@
 import discourse.lattice as lattice
+import textwrap
 
 class NGramDiscourseInstance:
     """An ngram discourse coherence sequence mode instance for
@@ -159,7 +160,9 @@ class NGramDiscourseInstance:
 
             head = s2i(label, end=nsents)
             tail = s2i(transition.labels[i + 1], end=nsents)
-            if tail + 1 != head:
+            if tail == -1 and head == -1:
+                continue
+            if tail + 1 != head :
                 correct = False
                 break
         if transition.position != s2i(transition.labels[0], end=nsents):
@@ -190,4 +193,46 @@ class NGramDiscourseInstance:
 
 
         return gold
+
+    def indices2str(self, indices):
+        """
+        Return the document as a string, where the sentences are
+        ordered according to the index values in the list *indices*.
+
+        indices -- a list of index values
+        """
+        txts = []
+        wrapper = textwrap.TextWrapper(subsequent_indent=u'        ')
+        for i in indices:
+            txts.append(u'({})  {}'.format(i, unicode(self.doc[i])))
+        wrapped_txt = [wrapper.fill(txt) for txt in txts]
+
+        return u'\n'.join(wrapped_txt)
+
+    def trans2str(self, transitions):
+        """
+        Return the document as a string, where the sentences are
+        ordered according to the set of *transitions*.
+
+        transitions -- A set or list of
+            discourse.hypergraph.Transition objects.
+        """
+        ord_trans = lattice.recover_order(transitions)
+        indices = [lattice.s2i(t.labels[0])
+                   for t in ord_trans
+                   if t.labels[0] != 'END']
+        return self.indices2str(indices)
+
+    def hypergraph(self):
+        """
+        Build a graph of this problem instance, using PyDecode.
+        """
+        import pydecode.chart as chart
+        c = chart.ChartBuilder(semiring=chart.HypergraphSemiRing,
+                               build_hypergraph=True, strict=False)
+        hypergraph = lattice.build_ngram_lattice(self, c).finish()
+        return hypergraph
+
+
+
 
