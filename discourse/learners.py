@@ -56,14 +56,13 @@ class DiscourseSequenceModel(model.DynamicProgrammingModel):
             sys.exit()
 
     def zero_one_loss(self, y, y_hat):
-        y_ord = lattice.recover_order(y)
-        y_hat_ord = lattice.recover_order(y_hat)
-
+        y_set = set(y)
+        
         total_loss = 0
-        for y_i, y_i_hat in izip(y_ord, y_hat_ord):
+        for y_i_hat in y_hat:
             print 'GOLD:', y_i.labels,
             print 'PRED:', y_i_hat.labels,
-            if y_i.labels != y_i_hat.labels:
+            if y_i_hat not in y_set:
                 total_loss = 1
                 print 'LOSS TRIGGERED'
             else:
@@ -183,7 +182,7 @@ class DiscourseSequenceModel(model.DynamicProgrammingModel):
             lf = self.zero_one_loss
 
         for i, edge in enumerate(hypergraph.edges):
-            l = lf(y, [edge])
+            l = lf(y, [edge.label])
             scores[i] += l
 
         return ph.Potentials(hypergraph).from_vector(scores)
