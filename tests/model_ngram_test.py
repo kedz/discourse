@@ -2215,3 +2215,60 @@ class TestNGramModel:
         for f in fmap3.keys():
             assert f in valid_feats3
             assert fmap3[f] == 1
+
+    def relative_position_quarter_feature_test(self):
+        inst = NGramDiscourseInstance(self.doc,
+                                      {'debug': True,
+                                       'relative_position_qtr': True},
+                                      None, 2)
+
+        t1 = Transition(('s-0', 'START'), 0)
+        fmap1 = inst.feature_map(t1)
+        
+        valid_feats1 = set(['DEBUG',
+                            '(1Q QTR) DEBUG'])
+
+        for f in fmap1.keys():
+            assert f in valid_feats1
+            assert fmap1[f] == 1
+
+        t2 = Transition(('s-1', 's-0'), 1)
+        fmap2 = inst.feature_map(t2)
+        
+        valid_feats2 = set(['DEBUG',
+                            '(1Q QTR) DEBUG'])
+
+        for f in fmap2.keys():
+            assert f in valid_feats2
+            assert fmap2[f] == 1
+
+        t3 = Transition(('s-2', 's-1'), 2)
+        fmap3 = inst.feature_map(t3)
+        
+        valid_feats3 = set(['DEBUG',
+                            '(2Q QTR) DEBUG'])
+
+        for f in fmap3.keys():
+            assert f in valid_feats3
+            assert fmap3[f] == 1
+
+        t4 = Transition(('s-3', 's-2'), 3)
+        fmap4 = inst.feature_map(t4)
+        
+        valid_feats4 = set(['DEBUG',
+                            '(3Q QTR) DEBUG'])
+
+        for f in fmap4.keys():
+            assert f in valid_feats4
+            assert fmap4[f] == 1
+ 
+        t5 = Transition(('END', 's-3'), 4)
+        fmap5 = inst.feature_map(t5)
+        
+        valid_feats5 = set(['DEBUG',
+                            '(4Q QTR) DEBUG'])
+
+        for f in fmap5.keys():
+            assert f in valid_feats5
+            assert fmap5[f] == 1
+
