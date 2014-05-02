@@ -265,11 +265,11 @@ class NGramDiscourseInstance:
         for ent, cnt in self.entity_counts.iteritems():
             if cnt > 1:
                 print 'Checking ent:', ent, cnt
-                for     
+                #for     
                      
 
-        for p in itertools.product(*ent_roles):
-            print p
+#        for p in itertools.product(*ent_roles):
+#            print p
             
             #p = tuple(p) 
             #if p == null_p:
