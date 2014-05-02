@@ -138,8 +138,6 @@ class NGramDiscourseInstance:
 #            if self.active_feat.get('relative_position', False):
 #                self._f_relative_position(fmap, transition)
 #
-#            if self.active_feat.get('relative_position_qtr', False):
-#                self._f_relative_position_qtr(fmap, transition)
 #            
 #            if self.active_feat.get('sentiment', False):
 #                self._f_sentiment(fmap, transition)
@@ -149,6 +147,9 @@ class NGramDiscourseInstance:
             
         if self.active_feat.get(u'debug', False):
             self._f_debug(fmap, transition)
+
+        if self.active_feat.get('relative_position_qtr', False):
+            self._f_relative_position_qtr(fmap, transition)
 
             #self._f_cache[transition] = fmap
         return fmap
@@ -195,7 +196,51 @@ class NGramDiscourseInstance:
             # Mark the feature
             fstr = u'First Word: {}'.format(u' --> '.join(p))
             fmap[fstr] = 1
-                
+
+    def _f_verbs(self, fmap, transition):
+        
+        nsents = len(self.doc)
+        def extract_verbs(label):
+            idx = lattice.s2i(label, end=nsents)
+            if idx == -1:
+                return ['START']
+            elif idx == nsents:
+                return ['END']
+            else:
+                s = self.doc.sents[idx]
+                verbs = [t.lem.lower() for t in s.tokens if 'VB' in t.pos]
+                return set(verbs).union(set(['__']))
+        
+        feature_combs = [extract_verbs(label) 
+                         for label in transition.labels[::-1]]
+        null_p = tuple([u'__']) * len(feature_combs)
+
+        for p in itertools.product(*feature_combs):
+            p = tuple(p) 
+            if p == null_p:
+                continue
+            
+            # Mark the feature
+            fstr = u'Verbs: {}'.format(u' --> '.join(p))
+            fmap[fstr] = 1
+    
+    def _f_relative_position_qtr(self, fmap, transition):
+        nsents = len(self.doc)
+        per = transition.position / float(nsents)
+        if per <= .25:
+            qtr = u'1Q'
+        elif per <= .5:
+            qtr = u'2Q'
+        elif per <= .75:
+            qtr = u'3Q'
+        else:
+            qtr = u'4Q'
+        new_feats = []
+        for feat, value in fmap.items():
+            new_feats.append((u'({} QTR) {}'.format(qtr, feat), value))  
+        for feat, value in new_feats:
+            fmap[feat] = value        
+               
 
     def _f_debug(self, fmap, transition):
         s2i = lattice.s2i
