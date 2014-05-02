@@ -7,7 +7,7 @@ from discourse.lattice import Transition
 class TestNGramModel:
 
     @classmethod
-    def setup_class(cls):
+    def setup_class(self):
 
         xml_str = """<?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet href="CoreNLP-to-HTML.xsl" type="text/xsl"?>
@@ -2042,10 +2042,10 @@ class TestNGramModel:
 </root>   
 """
         f = StringIO(xml_str)
-        cls.doc = corenlp.Document(f)
+        self.doc = corenlp.Document(f)
 
 
-    def gold_transition_bigram_test(cls):
+    def gold_transition_bigram_test(self):
         correct_trans = (Transition(('s-0', 'START'), 0), 
                          Transition(('s-1', 's-0'), 1), 
                          Transition(('s-2', 's-1'), 2), 
@@ -2053,12 +2053,12 @@ class TestNGramModel:
                          Transition(('END', 's-3'), 4)) 
 
        
-        inst = NGramDiscourseInstance(cls.doc, {}, None, 2)
+        inst = NGramDiscourseInstance(self.doc, {}, None, 2)
         gold_trans = tuple(inst.gold_transitions())
 
         assert correct_trans == gold_trans
 
-    def gold_transition_trigram_test(cls):
+    def gold_transition_trigram_test(self):
         correct_trans = (Transition(('s-0', 'START', 'START'), 0), 
                          Transition(('s-1', 's-0', 'START'), 1), 
                          Transition(('s-2', 's-1', 's-0'), 2), 
@@ -2066,13 +2066,13 @@ class TestNGramModel:
                          Transition(('END', 's-3', 's-2'), 4)) 
 
        
-        inst = NGramDiscourseInstance(cls.doc, {}, None, 3)
+        inst = NGramDiscourseInstance(self.doc, {}, None, 3)
         gold_trans = tuple(inst.gold_transitions())
 
         assert correct_trans == gold_trans
 
-    def debug_feature_bigram_test(cls):
-        inst = NGramDiscourseInstance(cls.doc, {}, None, 2)
+    def debug_feature_bigram_test(self):
+        inst = NGramDiscourseInstance(self.doc, {}, None, 2)
         fmap1 = {}
         t1 = Transition(('s-3', 's-2'), 3)
         inst._f_debug(fmap1, t1)
@@ -2097,8 +2097,8 @@ class TestNGramModel:
         
         assert fmap4.get('DEBUG', 0) == 0
 
-    def debug_feature_trigram_test(cls):
-        inst = NGramDiscourseInstance(cls.doc, {}, None, 3)
+    def debug_feature_trigram_test(self):
+        inst = NGramDiscourseInstance(self.doc, {}, None, 3)
         fmap1 = {}
         t1 = Transition(('s-3', 's-2', 's-1'), 3)
         inst._f_debug(fmap1, t1)
@@ -2123,5 +2123,95 @@ class TestNGramModel:
         
         assert fmap4.get('DEBUG', 0) == 0
 
+    def first_word_feature_bigram_test(self):
+        inst = NGramDiscourseInstance(self.doc, {'first_word': True}, None, 2)
+        fmap1 = {}
+        t1 = Transition(('s-2', 's-1'), 2)
+        inst._f_first_word(fmap1, t1)
+        
+        valid_feats1 = set(['First Word: beijing --> no',
+                           'First Word: beijing --> __', 
+                           'First Word: beijing --> no', 
+                           'First Word: beijing --> __', 
+                           'First Word: __ --> no',
+                           'First Word: __ --> __',
+                           'First Word: __ --> no',
+                           'First Word: LOCATION --> no',
+                           'First Word: LOCATION --> __',
+                           'First Word: LOCATION --> no',
+                           'First Word: LOCATION --> __'])
+
+        for f in fmap1.keys():
+            assert f in valid_feats1
+            assert fmap1[f] == 1
+
+        fmap2 = {}
+        t2 = Transition(('s-1', 'START'), 0)
+        inst._f_first_word(fmap2, t2)
+        
+        valid_feats2 = set(['First Word: START --> beijing',
+                           'First Word: START --> __', 
+                           'First Word: START --> LOCATION']) 
+
+        for f in fmap2.keys():
+            assert f in valid_feats2
+            assert fmap2[f] == 1
+
+        fmap3 = {}
+        t3 = Transition(('END', 's-3'), 5)
+        inst._f_first_word(fmap3, t3)
+        
+        valid_feats3 = set(['First Word: he --> END',
+                           'First Word: __ --> END']) 
+
+        for f in fmap3.keys():
+            assert f in valid_feats3
+            assert fmap3[f] == 1
 
 
+    def first_word_feature_trigram_test(self):
+        inst = NGramDiscourseInstance(self.doc, {'first_word': True}, None, 3)
+        fmap1 = {}
+        t1 = Transition(('s-3', 's-2', 's-1'), 3)
+        inst._f_first_word(fmap1, t1)
+        
+        valid_feats1 = set(['First Word: beijing --> no --> he',
+                           'First Word: beijing --> __ --> he', 
+                           'First Word: beijing --> no --> __', 
+                           'First Word: beijing --> __ --> __', 
+                           'First Word: __ --> no --> he',
+                           'First Word: __ --> __ --> he',
+                           'First Word: __ --> no --> __',
+                           'First Word: LOCATION --> no --> he',
+                           'First Word: LOCATION --> __ --> he',
+                           'First Word: LOCATION --> no --> __',
+                           'First Word: LOCATION --> __ --> __'])
+
+        for f in fmap1.keys():
+            assert f in valid_feats1
+            assert fmap1[f] == 1
+
+        fmap2 = {}
+        t2 = Transition(('s-1', 'START', 'START'), 0)
+        inst._f_first_word(fmap2, t2)
+        
+        valid_feats2 = set(['First Word: START --> START --> beijing',
+                           'First Word: START --> START --> __', 
+                           'First Word: START --> START --> LOCATION']) 
+
+        for f in fmap2.keys():
+            assert f in valid_feats2
+            assert fmap2[f] == 1
+
+        fmap3 = {}
+        t3 = Transition(('END', 's-3', 's-2'), 5)
+        inst._f_first_word(fmap3, t3)
+        
+        valid_feats3 = set(['First Word: no --> he --> END',
+                           'First Word: __ --> he --> END', 
+                           'First Word: no --> __ --> END', 
+                           'First Word: __ --> __ --> END']) 
+
+        for f in fmap3.keys():
+            assert f in valid_feats3
+            assert fmap3[f] == 1
