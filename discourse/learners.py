@@ -41,7 +41,7 @@ class DiscourseSequenceModel(model.DynamicProgrammingModel):
    
     def loss(self, y, y_hat):
         if self._loss_function == '01':
-            return self.zero_one_loss(y, y_hat)
+            return self.zero_one_loss(y, y_hat, verbose=True)
         elif self._loss_function == 'hamming-node':
             return self.hamming_node_loss(y, y_hat)
         elif self._loss_function == 'hamming-edge':
@@ -55,23 +55,25 @@ class DiscourseSequenceModel(model.DynamicProgrammingModel):
             import sys
             sys.exit()
 
-    def zero_one_loss(self, y, y_hat):
+    def zero_one_loss(self, y, y_hat, verbose=False):
         y_set = set(y)
-        
         total_loss = 0
         for y_i_hat in y_hat:
-            print 'GOLD:', y_i.labels,
-            print 'PRED:', y_i_hat.labels,
+            if verbose:
+                print 'PRED:', y_i_hat,
             if y_i_hat not in y_set:
                 total_loss = 1
-                print 'LOSS TRIGGERED'
+                if verbose:
+                    print 'LOSS TRIGGERED'
             else:
-                print 'MATCH'
-        print '0-1 LOSS: {}'.format(total_loss)
+                if verbose:
+                    print 'MATCH'
+        if verbose:
+            print '0-1 LOSS: {}'.format(total_loss)
                    
         return total_loss
 
-    def hamming_node_loss(self, y, y_hat):
+    def hamming_node_loss(self, y, y_hat, verbose=False):
         s2i = lattice.s2i
         total_loss = 0
         end_pos = len(y) - 1 
@@ -80,14 +82,16 @@ class DiscourseSequenceModel(model.DynamicProgrammingModel):
                 l = 1
             else:
                 l = 0
-            print 'Gold:', y_i_hat.position,
-            print 'Pred:', y_i_hat.labels[0], 'Loss: {}'.format(l)
+            if verbose:
+                print 'Gold:', y_i_hat.position,
+                print 'Pred:', y_i_hat.labels[0], 'Loss: {}'.format(l)
             total_loss += l
         
-        print 'Total Loss:', total_loss
+        if verbose:
+            print 'Total Loss:', total_loss
         return total_loss      
 
-    def hamming_edge_loss(self, y, y_hat):
+    def hamming_edge_loss(self, y, y_hat, verbose=False):
         s2i = lattice.s2i
         total_loss = 0
         y_set = set(y)
@@ -96,10 +100,11 @@ class DiscourseSequenceModel(model.DynamicProgrammingModel):
                 l = 1
             else:
                 l = 0
-            print 'Pred:', y_i_hat, 'Loss: {}'.format(l)
+            if verbose:
+                print 'Pred:', y_i_hat, 'Loss: {}'.format(l)
             total_loss += l
-
-        print 'Total Loss:', total_loss
+        if verbose:
+            print 'Total Loss:', total_loss
         return total_loss      
 
     def loss_augmented_inference(self, x, y, w, 
@@ -179,6 +184,9 @@ class DiscourseSequenceModel(model.DynamicProgrammingModel):
             lf = self.hamming_edge_loss
         else:
             # This should never happen.
+            import sys
+            print "BADNESS"
+            sys.exit()
             lf = self.zero_one_loss
 
         for i, edge in enumerate(hypergraph.edges):
