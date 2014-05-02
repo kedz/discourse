@@ -95,14 +95,14 @@ class NGramDiscourseInstance:
 
         # Check the cache if we have already created this transition's
         # feature map, otherwise create a new one.
-        if transition in self._f_cache:
-            fmap = self._f_cache[transition]
-            return fmap
+        #if transition in self._f_cache:
+        #    fmap = self._f_cache[transition]
+        #    return fmap
 
-        else:
+        #else:
 
             # Create an empty feature map for this transition.
-            fmap = {}
+        fmap = {}
 
             ### Call each feature function if active. ###
 #            if self.active_feat.get('role_match', False):
@@ -146,11 +146,11 @@ class NGramDiscourseInstance:
 #            if self.active_feat.get('topics_rewrite', False):
 #                self._f_topics_rewrite(fmap, transition)
             
-            if self.active_feat.get(u'debug', False):
-                self._f_debug(fmap, transition)
+        if self.active_feat.get(u'debug', False):
+            self._f_debug(fmap, transition)
 
-            self._f_cache[transition] = fmap
-            return fmap
+            #self._f_cache[transition] = fmap
+        return fmap
 
     def _f_debug(self, fmap, transition):
         s2i = lattice.s2i
@@ -167,6 +167,7 @@ class NGramDiscourseInstance:
                 break
         if transition.position != s2i(transition.labels[0], end=nsents):
             correct = False
+        
         if correct:
             fmap['DEBUG'] = 1
 
@@ -176,8 +177,8 @@ class NGramDiscourseInstance:
         
         ngrams = self.ngram
         nsents = len(self.doc.sents)
-        labels = ['START', 'START'] + ['s-{}'.format(i) 
-                                       for i in range(nsents)]
+        labels = ['START'] * (ngrams - 1) + ['s-{}'.format(i) 
+                                             for i in range(nsents)]
 
         labels += ['END']
         nlabels = len(labels)
@@ -232,7 +233,3 @@ class NGramDiscourseInstance:
                                build_hypergraph=True, strict=False)
         hypergraph = lattice.build_ngram_lattice(self, c).finish()
         return hypergraph
-
-
-
-
