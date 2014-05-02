@@ -1584,7 +1584,7 @@ class TestNGramModel:
           </token>
           <token id="7">
             <word>damages</word>
-            <lemma>damages</lemma>
+            <lemma>damage</lemma>
             <CharacterOffsetBegin>480</CharacterOffsetBegin>
             <CharacterOffsetEnd>487</CharacterOffsetEnd>
             <POS>NNS</POS>
@@ -2044,6 +2044,143 @@ class TestNGramModel:
         f = StringIO(xml_str)
         self.doc = corenlp.Document(f)
 
+        xml_str2 = """<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet href="CoreNLP-to-HTML.xsl" type="text/xsl"?>
+<root>
+  <document>
+    <sentences>
+      <sentence id="1">
+        <tokens>
+          <token id="1">
+            <word>This</word>
+            <lemma>this</lemma>
+            <CharacterOffsetBegin>0</CharacterOffsetBegin>
+            <CharacterOffsetEnd>4</CharacterOffsetEnd>
+            <POS>DT</POS>
+            <NER>O</NER>
+            <Speaker>PER0</Speaker>
+          </token>
+          <token id="2">
+            <word>sentence</word>
+            <lemma>sentence</lemma>
+            <CharacterOffsetBegin>5</CharacterOffsetBegin>
+            <CharacterOffsetEnd>13</CharacterOffsetEnd>
+            <POS>NN</POS>
+            <NER>O</NER>
+            <Speaker>PER0</Speaker>
+          </token>
+          <token id="3">
+            <word>is</word>
+            <lemma>be</lemma>
+            <CharacterOffsetBegin>14</CharacterOffsetBegin>
+            <CharacterOffsetEnd>16</CharacterOffsetEnd>
+            <POS>VBZ</POS>
+            <NER>O</NER>
+            <Speaker>PER0</Speaker>
+          </token>
+          <token id="4">
+            <word>a</word>
+            <lemma>a</lemma>
+            <CharacterOffsetBegin>17</CharacterOffsetBegin>
+            <CharacterOffsetEnd>18</CharacterOffsetEnd>
+            <POS>DT</POS>
+            <NER>O</NER>
+            <Speaker>PER0</Speaker>
+          </token>
+          <token id="5">
+            <word>test</word>
+            <lemma>test</lemma>
+            <CharacterOffsetBegin>19</CharacterOffsetBegin>
+            <CharacterOffsetEnd>23</CharacterOffsetEnd>
+            <POS>NN</POS>
+            <NER>O</NER>
+            <Speaker>PER0</Speaker>
+          </token>
+          <token id="6">
+            <word>.</word>
+            <lemma>.</lemma>
+            <CharacterOffsetBegin>23</CharacterOffsetBegin>
+            <CharacterOffsetEnd>24</CharacterOffsetEnd>
+            <POS>.</POS>
+            <NER>O</NER>
+            <Speaker>PER0</Speaker>
+          </token>
+        </tokens>
+        <parse>(ROOT (S (NP (DT This) (NN sentence)) (VP (VBZ is) (NP (DT a) (NN test))) (. .))) </parse>
+        <dependencies type="basic-dependencies">
+          <dep type="root">
+            <governor idx="0">ROOT</governor>
+            <dependent idx="5">test</dependent>
+          </dep>
+          <dep type="det">
+            <governor idx="2">sentence</governor>
+            <dependent idx="1">This</dependent>
+          </dep>
+          <dep type="nsubj">
+            <governor idx="5">test</governor>
+            <dependent idx="2">sentence</dependent>
+          </dep>
+          <dep type="cop">
+            <governor idx="5">test</governor>
+            <dependent idx="3">is</dependent>
+          </dep>
+          <dep type="det">
+            <governor idx="5">test</governor>
+            <dependent idx="4">a</dependent>
+          </dep>
+        </dependencies>
+        <dependencies type="collapsed-dependencies">
+          <dep type="root">
+            <governor idx="0">ROOT</governor>
+            <dependent idx="5">test</dependent>
+          </dep>
+          <dep type="det">
+            <governor idx="2">sentence</governor>
+            <dependent idx="1">This</dependent>
+          </dep>
+          <dep type="nsubj">
+            <governor idx="5">test</governor>
+            <dependent idx="2">sentence</dependent>
+          </dep>
+          <dep type="cop">
+            <governor idx="5">test</governor>
+            <dependent idx="3">is</dependent>
+          </dep>
+          <dep type="det">
+            <governor idx="5">test</governor>
+            <dependent idx="4">a</dependent>
+          </dep>
+        </dependencies>
+        <dependencies type="collapsed-ccprocessed-dependencies">
+          <dep type="root">
+            <governor idx="0">ROOT</governor>
+            <dependent idx="5">test</dependent>
+          </dep>
+          <dep type="det">
+            <governor idx="2">sentence</governor>
+            <dependent idx="1">This</dependent>
+          </dep>
+          <dep type="nsubj">
+            <governor idx="5">test</governor>
+            <dependent idx="2">sentence</dependent>
+          </dep>
+          <dep type="cop">
+            <governor idx="5">test</governor>
+            <dependent idx="3">is</dependent>
+          </dep>
+          <dep type="det">
+            <governor idx="5">test</governor>
+            <dependent idx="4">a</dependent>
+          </dep>
+        </dependencies>
+      </sentence>
+    </sentences>
+  </document>
+</root>"""     
+
+    
+        f2 = StringIO(xml_str2)
+        self.doc2 = corenlp.Document(f2)
 
     def gold_transition_bigram_test(self):
         correct_trans = (Transition(('s-0', 'START'), 0), 
@@ -2300,4 +2437,39 @@ class TestNGramModel:
             assert f in valid_feats1
             assert fmap1[f] == 1
 
+    def entity_roles_test(self):
+        inst = NGramDiscourseInstance(self.doc2, {'role_match': True}, None, 2)
+        ent_roles = inst._entity_roles(self.doc2.sents[0])    
+        correct_set = set([tuple(['sentence', 'SUBJECT']),
+                           tuple(['test', 'OBJECT'])]) 
+        assert correct_set == ent_roles
+        
+        ent_roles2 = inst._entity_roles(self.doc.sents[2])    
+        correct_set2 = set([tuple(['information', 'OBJECT']),
+                            tuple(['injury', 'CLAUSE']),
+                            tuple(['damage', 'CLAUSE']),
+                            tuple(['official', 'OBJECT']),
+                            tuple(['surname', 'CLAUSE'])]) 
+ 
+        assert correct_set2 == ent_roles2
+ 
+        ent_roles3 = inst._entity_roles(self.doc.sents[1])    
+        correct_set3 = set([tuple(['earthquake', 'SUBJECT']),
+                            tuple(['area', 'OBJECT']),
+                            tuple(['mountain', 'CLAUSE'])]) 
+         
+        assert correct_set3 == ent_roles3
+
+        print 
+        for i, s in enumerate(self.doc):
+            print i, inst._entity_roles(self.doc.sents[i])
+
+    def role_match_bigram_feature_test(self): 
+        inst = NGramDiscourseInstance(self.doc, {'role_match': True}, None, 2)
+
+        fmap1 = {}
+        t1 = Transition(('s-3', 's-2'), 3)
+        inst._f_role_match(fmap1, t1)
+        for s in self.doc:
+            print s        
 
