@@ -30,11 +30,13 @@ class NGramDiscourseInstance:
 
     def __init__(self, doc, features=None, topic_map=None, ngram=3):
         self.doc = doc
+        self.nsents = len(doc.sents)
         self.active_feat = active_features if features is None else features
         self.entity_counts = self._build_entity_counts(doc)
         self._f_cache = {}
         self._topic_map = topic_map
         self.ngram = ngram
+
 
     def _build_entity_counts(self, doc):
         """ Build a dict of occurrence counts of noun tokens in this
@@ -106,8 +108,8 @@ class NGramDiscourseInstance:
         fmap = {}
 
             ### Call each feature function if active. ###
-#            if self.active_feat.get('role_match', False):
-#                self._f_role_match(fmap, transition)
+        if self.active_feat.get('role_match', False):
+            self._f_role_match(fmap, transition)
 #
 #            if self.active_feat.get('discourse_new', False):
 #                self._f_discourse_new(fmap, transition)
@@ -240,6 +242,111 @@ class NGramDiscourseInstance:
             new_feats.append((u'({} QTR) {}'.format(qtr, feat), value))  
         for feat, value in new_feats:
             fmap[feat] = value        
+
+
+    def _f_role_match(self, fmap, transition):
+
+        ent_roles = []
+        ents = set()
+        for label in transition.labels[::-1]:
+            idx = lattice.s2i(label, end=self.nsents)
+            if idx == -1:         
+                #ent_roles.append([('START', 'START')])
+                ents.add('START')
+            elif idx == self.nsents:
+                #ent_roles.append([('END', 'END')])
+                ents.add('END')
+            else:
+                s = self.doc.sents[idx]
+                sent_ent_roles = {ent_role[0]: ent_role[1] 
+                                  for ent_role in self._entity_roles(s)
+                                  if self.entity_counts[ent_role[0]] > 1}
+                
+        for ent, cnt in self.entity_counts.iteritems():
+            if cnt > 1:
+                print 'Checking ent:', ent, cnt
+                for     
+                     
+
+        for p in itertools.product(*ent_roles):
+            print p
+            
+            #p = tuple(p) 
+            #if p == null_p:
+            #    continue
+            
+            # Mark the feature
+            #fstr = u'Verbs: {}'.format(u' --> '.join(p))
+            #fmap[fstr] = 1
+               
+
+    def _entity_roles(self, s):
+        """ Returns a set of entity, role tuples for a sentence s.
+
+        Paramters
+        ---------
+        s : corenlp.Sentence
+            A sentence from this problem instance.
+
+        Returns
+        -------
+            s_ents : set (tuple(Token, string))
+            A set of word token, role label tuples.
+        """
+        s_ents = set()
+        subj_types = set(['nsubj', 'csubj' 'agent'])
+        obj_types = set(['csubjpass', 'dobj', 'nsubjpass'])
+        ntags = set(['NN', 'NNS', 'NP', 'NPS'])
+        dgraph = s.dep_graph()
+        for t in s.tokens:
+            if 'VB' in t.pos:
+                if t.lem == 'be':
+                    s_ents = s_ents.union(self.find_copula_roles(dgraph, t))
+                else:
+                    for rel in dgraph.govs[t]:
+                        if rel.dep.pos in ntags: 
+                            role = None
+                            if rel.type in subj_types:
+                                role = 'SUBJECT'
+                            elif rel.type in obj_types:
+                                role = 'OBJECT'
+                            else:
+                                role = 'CLAUSE'    
+                            s_ents.add(tuple([rel.dep.lem.lower(), 
+                                              role]))
+        return s_ents
+
+    def find_copula_roles(self, dgraph, token):
+        ntags = set(['NN', 'NNS', 'NP', 'NPS'])
+        ent_roles = set()
+        cop_obj = None
+        for rel in dgraph.deps[token]:
+            if rel.type == 'cop' and rel.gov.pos in ntags:
+                cop_obj = rel.gov
+                ent_roles.add(tuple([cop_obj.lem.lower(), 'OBJECT']))
+                break
+        if cop_obj is not None:
+            for rel in dgraph.govs[cop_obj]:
+                if rel.type == 'nsubj' and rel.dep.pos in ntags:
+                    t = rel.dep
+                    ent_roles.add(tuple([t.lem.lower(), 'SUBJECT']))
+        return ent_roles 
+#        roots = [(rel.dep, rel.type) for rel in dgraph.type['root']]
+#        roots.extend([(rel.dep, rel.type) for rel in dgraph.type['ccomp']])
+#        for token, dtype in roots:
+#            if token.pos in ['NN', 'NNS', 'NP', 'NPS']:
+#                s_ents.add((token, dtype))
+#            for rel in dgraph.govs[token]:
+#                if rel.type in dtypes or 'prep' in rel.type:
+#                    if rel.dep.pos in ['NN', 'NNS', 'NP', 'NPS']:
+#                        s_ents.add((rel.dep, rel.type))
+#
+#        for rel in s.deps:
+#            if rel.type != 'nn' and rel.dep.pos in ['NN', 'NNS', 'NP', 'NPS']:
+#                if (rel.dep, rel.type) not in s_ents:
+#                    s_ents.add((rel.dep, 'other'))
+#        return s_ents
+
                
 
     def _f_debug(self, fmap, transition):
