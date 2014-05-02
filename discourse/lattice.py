@@ -1,4 +1,5 @@
 from collections import defaultdict
+import pydecode.hyper as ph
 
 class SentenceNGram:
     def __init__(self, labels, position):
@@ -7,13 +8,13 @@ class SentenceNGram:
 
     def _attrs(self):
         return (self.labels, self.position)
-    
+
     def __eq__(self, other):
         return isinstance(other, SentenceNGram) and \
             self._attrs() == other._attrs()
-      
+
     def __hash__(self):
-        return hash(self._attrs()) 
+        return hash(self._attrs())
 
     def __str__(self):
         return u'{}: {}'.format(self.position, u'->'.join(self.labels[::-1]))
@@ -25,14 +26,14 @@ class Transition:
 
     def _attrs(self):
         return (self.labels, self.position)
-    
+
     def __eq__(self, other):
         return isinstance(other, Transition) and \
             self._attrs() == other._attrs()
-      
+
     def __hash__(self):
-        return hash(self._attrs()) 
-          
+        return hash(self._attrs())
+
     def __str__(self):
         return u'{}: {}'.format(self.position, u'->'.join(self.labels[::-1]))
 
@@ -88,7 +89,7 @@ def build_ngram_lattice(discourse_model, c):
                 if node_label1 in node.labels:
                     continue
 
-                s = SentenceNGram(tuple([node_label1]) + node.labels[:-1], 
+                s = SentenceNGram(tuple([node_label1]) + node.labels[:-1],
                                   position)
                 n2e[s].add(node)
 
@@ -133,6 +134,12 @@ def build_constraints(transition):
     cons = []
     if transition.labels[0] != u'END':
         cons.append((transition.labels[0], 1))
+    return cons
+
+def build_beam_constraints(transition):
+    cons = ph.Bitset()
+    if transition.labels[0] != u'END':
+        cons[s2i(transition.labels[0])] = 1
     return cons
 
 

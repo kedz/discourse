@@ -16,32 +16,32 @@ NTSB_TEST=$DISCOURSE_DATA/ntsb/corenlp/test
 
 CS_DIR=$DISCOURSE_DATA/cluster_sequences
 
-#python train_models.py -train $APWS_TRAIN -dev $APWS_DEV -test $APWS_DEV -od models/apws_models -l perceptron -lf 01 -inf gurobi -n 2 -dbg 
+#python train_models.py -train $APWS_TRAIN -dev $APWS_DEV -test $APWS_DEV -od models/apws_models -l perceptron -lf 01 -inf gurobi -n 2 -dbg
 #
-#python train_models.py -train $APWS_TRAIN -dev $APWS_DEV -test $APWS_DEV -od models/apws_models -l perceptron -lf 01 -inf gurobi -n 3 -dbg 
+#python train_models.py -train $APWS_TRAIN -dev $APWS_DEV -test $APWS_DEV -od models/apws_models -l perceptron -lf 01 -inf gurobi -n 3 -dbg
 #
 #
-#python train_models.py -train $APWS_TRAIN -dev $APWS_DEV -test $APWS_DEV -od models/apws_models -l sg-ssvm -lf 01 -inf gurobi -n 2 -dbg 
-#python train_models.py -train $APWS_TRAIN -dev $APWS_DEV -test $APWS_DEV -od models/apws_models -l sg-ssvm -lf hamming-node -inf gurobi -n 2 -dbg 
-#python train_models.py -train $APWS_TRAIN -dev $APWS_DEV -test $APWS_DEV -od models/apws_models -l sg-ssvm -lf hamming-edge -inf gurobi -n 2 -dbg 
+#python train_models.py -train $APWS_TRAIN -dev $APWS_DEV -test $APWS_DEV -od models/apws_models -l sg-ssvm -lf 01 -inf gurobi -n 2 -dbg
+#python train_models.py -train $APWS_TRAIN -dev $APWS_DEV -test $APWS_DEV -od models/apws_models -l sg-ssvm -lf hamming-node -inf gurobi -n 2 -dbg
+#python train_models.py -train $APWS_TRAIN -dev $APWS_DEV -test $APWS_DEV -od models/apws_models -l sg-ssvm -lf hamming-edge -inf gurobi -n 2 -dbg
 #
-#python train_models.py -train $APWS_TRAIN -dev $APWS_DEV -test $APWS_DEV -od models/apws_models -l sg-ssvm -lf 01 -inf gurobi -n 3 -dbg 
-#python train_models.py -train $APWS_TRAIN -dev $APWS_DEV -test $APWS_DEV -od models/apws_models -l sg-ssvm -lf hamming-node -inf gurobi -n 3 -dbg 
-#python train_models.py -train $APWS_TRAIN -dev $APWS_DEV -test $APWS_DEV -od models/apws_models -l sg-ssvm -lf hamming-edge -inf gurobi -n 3 -dbg 
+#python train_models.py -train $APWS_TRAIN -dev $APWS_DEV -test $APWS_DEV -od models/apws_models -l sg-ssvm -lf 01 -inf gurobi -n 3 -dbg
+#python train_models.py -train $APWS_TRAIN -dev $APWS_DEV -test $APWS_DEV -od models/apws_models -l sg-ssvm -lf hamming-node -inf gurobi -n 3 -dbg
+#python train_models.py -train $APWS_TRAIN -dev $APWS_DEV -test $APWS_DEV -od models/apws_models -l sg-ssvm -lf hamming-edge -inf gurobi -n 3 -dbg
 
 
-python train_models.py -train $APWS_TRAIN -dev $APWS_DEV -test $APWS_TEST -od models/apws_models -l perceptron -lf 01 -inf gurobi -n 2  
+python train_models.py -train $APWS_TRAIN -dev $APWS_DEV -test $APWS_TEST -od models/apws_models2 -l perceptron -lf 01 -inf glpk -n 2
 
-python train_models.py -train $APWS_TRAIN -dev $APWS_DEV -test $APWS_TEST -od models/apws_models -l perceptron -lf 01 -inf gurobi -n 3  
+# python train_models.py -train $APWS_TRAIN -dev $APWS_DEV -test $APWS_TEST -od models/apws_models -l perceptron -lf 01 -inf gurobi -n 3
 
 
-python train_models.py -train $APWS_TRAIN -dev $APWS_DEV -test $APWS_TEST -od models/apws_models -l sg-ssvm -lf 01 -inf gurobi -n 2  
-python train_models.py -train $APWS_TRAIN -dev $APWS_DEV -test $APWS_TEST -od models/apws_models -l sg-ssvm -lf hamming-node -inf gurobi -n 2  
-python train_models.py -train $APWS_TRAIN -dev $APWS_DEV -test $APWS_TEST -od models/apws_models -l sg-ssvm -lf hamming-edge -inf gurobi -n 2  
+# python train_models.py -train $APWS_TRAIN -dev $APWS_DEV -test $APWS_TEST -od models/apws_models -l sg-ssvm -lf 01 -inf gurobi -n 2
+# python train_models.py -train $APWS_TRAIN -dev $APWS_DEV -test $APWS_TEST -od models/apws_models -l sg-ssvm -lf hamming-node -inf gurobi -n 2
+# python train_models.py -train $APWS_TRAIN -dev $APWS_DEV -test $APWS_TEST -od models/apws_models -l sg-ssvm -lf hamming-edge -inf gurobi -n 2
 
-python train_models.py -train $APWS_TRAIN -dev $APWS_DEV -test $APWS_TEST -od models/apws_models -l sg-ssvm -lf 01 -inf gurobi -n 3  
-python train_models.py -train $APWS_TRAIN -dev $APWS_DEV -test $APWS_TEST -od models/apws_models -l sg-ssvm -lf hamming-node -inf gurobi -n 3  
-python train_models.py -train $APWS_TRAIN -dev $APWS_DEV -test $APWS_TEST -od models/apws_models -l sg-ssvm -lf hamming-edge -inf gurobi -n 3  
+# python train_models.py -train $APWS_TRAIN -dev $APWS_DEV -test $APWS_TEST -od models/apws_models -l sg-ssvm -lf 01 -inf gurobi -n 3
+# python train_models.py -train $APWS_TRAIN -dev $APWS_DEV -test $APWS_TEST -od models/apws_models -l sg-ssvm -lf hamming-node -inf gurobi -n 3
+# python train_models.py -train $APWS_TRAIN -dev $APWS_DEV -test $APWS_TEST -od models/apws_models -l sg-ssvm -lf hamming-edge -inf gurobi -n 3
 
 
 

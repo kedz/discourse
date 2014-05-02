@@ -10,7 +10,7 @@ for p in `ls models/apws_models`;
 do
     RFILE=`echo "$p" | sed -r 's/\.p/.txt/g'`
     echo $RFILE
-    python describe_predictions.py -p models/apws_models/$p -of results/apws/$RFILE
+    python describe_predictions.py -p models/apws_models2/$p -of results/apws/$RFILE
 
 done
 
@@ -101,5 +101,3 @@ done
 #python describe_predictions.py -p apws_models/fw_rm_sx_ne_feats.p -of results/fw_rm_sx_ne_feats.txt
 #python describe_predictions.py -p apws_models/rm_feats.p -of results/rm_feats.txt
 #python describe_predictions.py -p apws_models/sx_feats.p -of results/sx_feats.txt
-
-

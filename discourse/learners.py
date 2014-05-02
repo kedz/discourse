@@ -32,13 +32,25 @@ class DiscourseSequenceModel(model.DynamicProgrammingModel):
         constraints = cons.Constraints(hypergraph,
                                 [('s-{}'.format(i), -1)
                                  for i in range(nsents)])
-        constraints.from_vector([lattice.build_constraints(edge.label) 
+        constraints.from_vector([lattice.build_constraints(edge.label)
                                  for edge in hypergraph.edges])
         return constraints
 
+    def beam_constraints(self, discourse_model, hypergraph):
+        """
+        For beam search. Transposed constraints.
+        """
+        constraints = ph.BinaryVectorPotentials(hypergraph) \
+            .from_vector([lattice.build_beam_constraints(edge.label)
+                          for edge in hypergraph.edges])
+        return constraints
+
+    def build_groups(self, hypergraph):
+        return [ i+ 1 for i in [node.label.position for node in hypergraph.nodes] ]
+
     def factored_joint_feature(self, discourse_model, transition, data):
         return discourse_model.feature_map(transition)
-   
+
     def loss(self, y, y_hat):
         if self._loss_function == '01':
             return self.zero_one_loss(y, y_hat, verbose=True)
@@ -70,13 +82,57 @@ class DiscourseSequenceModel(model.DynamicProgrammingModel):
                     print 'MATCH'
         if verbose:
             print '0-1 LOSS: {}'.format(total_loss)
-                   
+
         return total_loss
+
+    # Overloading inference to try beam search.
+    def inference(self, x, w, relaxed=False, beam=True):
+        self.inference_calls += 1
+        hypergraph = self._build_hypergraph(x)
+        potentials = self._build_potentials(hypergraph, x, w)
+        constraints = self.constraints(x, hypergraph)
+        beam_constraints = self.beam_constraints(x, hypergraph)
+
+        # FOR DEBUGGING
+
+        if not beam:
+            print "Running ILP"
+            hyperlp = lp.HypergraphLP.make_lp(hypergraph,
+                                              potentials,
+                                              integral=True)
+            hyperlp.add_constraints(constraints)
+            hyperlp.solve(pulp.solvers.GLPK(mip=1))
+            print "OBJECTIVE",str(hyperlp.objective)
+            path = hyperlp.path
+
+        # BEAM SEARCH
+        else:
+            groups = self.build_groups(hypergraph)
+            print groups
+            num_groups = max(groups) + 1
+
+            in_chart = ph.inside(hypergraph, potentials)
+            out = ph.outside(hypergraph, potentials, in_chart)
+
+            beam_chart = ph.beam_search_BinaryVector(hypergraph,
+                                                     potentials,
+                                                     beam_constraints,
+                                                     out,
+                                                     -10000000,
+                                                     groups,
+                                                     [1000] * num_groups,
+                                                     num_groups)
+            path = beam_chart.path(0)
+        print "OBJECTIVE", potentials.dot(path)
+
+        y = set([edge.label for edge in path])
+        return y
+
 
     def hamming_node_loss(self, y, y_hat, verbose=False):
         s2i = lattice.s2i
         total_loss = 0
-        end_pos = len(y) - 1 
+        end_pos = len(y) - 1
         for y_i_hat in y_hat:
             if s2i(y_i_hat.labels[0], end=end_pos) != y_i_hat.position:
                 l = 1
@@ -86,10 +142,10 @@ class DiscourseSequenceModel(model.DynamicProgrammingModel):
                 print 'Gold:', y_i_hat.position,
                 print 'Pred:', y_i_hat.labels[0], 'Loss: {}'.format(l)
             total_loss += l
-        
+
         if verbose:
             print 'Total Loss:', total_loss
-        return total_loss      
+        return total_loss
 
     def hamming_edge_loss(self, y, y_hat, verbose=False):
         s2i = lattice.s2i
@@ -105,9 +161,9 @@ class DiscourseSequenceModel(model.DynamicProgrammingModel):
             total_loss += l
         if verbose:
             print 'Total Loss:', total_loss
-        return total_loss      
+        return total_loss
 
-    def loss_augmented_inference(self, x, y, w, 
+    def loss_augmented_inference(self, x, y, w,
                                  relaxed=False, return_energy=False):
         self.inference_calls += 1
         if self._loss_function == '01':
@@ -129,8 +185,8 @@ class DiscourseSequenceModel(model.DynamicProgrammingModel):
         if self._debug:
             a = time.time()
         potentials = self._build_hamming_potentials(hypergraph, x, y, w)
-        
-        
+
+
         if self._debug:
             print >>sys.stderr, "BUILD POTENTIALS:", time.time() - a
         if not self._constrained:
@@ -174,9 +230,9 @@ class DiscourseSequenceModel(model.DynamicProgrammingModel):
         features = [self.factored_joint_feature(x, edge.label, data)
                     for edge in hypergraph.edges]
         f = self._vec.transform(features)
-        
+
         scores = f * w.T
-    
+
         # Add hamming loss to edge potentials
         if self._loss_function == 'hamming-node':
             lf = self.hamming_node_loss
@@ -213,7 +269,7 @@ class Learner:
                  use_relaxed=False, verbose=False,
                  algorithm='perceptron', loss='01',
                  max_iter=10):
-        
+
         self.dsm = DiscourseSequenceModel(True, use_gurobi,
                                           use_relaxed, verbose,
                                           loss)
@@ -223,8 +279,8 @@ class Learner:
                                                 verbose=(1 if verbose else 0),
                                                 max_iter=max_iter,
                                                 average=True)
-        
-        elif algorithm == 'sg-ssvm':        
+
+        elif algorithm == 'sg-ssvm':
             self.learner = SubgradientSSVM(self.dsm,
                                            verbose=(1 if verbose else 0),
                                            max_iter=max_iter,
@@ -276,7 +332,7 @@ class Learner:
 #
 #class SubgradientLearner:
 #    def __init__(self, max_iter=25, verbose=False, loss=None):
-#        
+#
 #        if loss == '01':
 #            self.dsm = DiscourseSequenceModelZeroOne(True)
 #        elif loss == 'hamming':
@@ -292,7 +348,7 @@ class Learner:
 ##        if loss == '01':
 ##            self.dsm.loss = self.dsm.zero_one_loss
 ##            self.dsm.loss_augmented_inference = self.inference
-#        
+#
 ##        if loss == 'hamming':
 ##            self.dsm.loss =  self.dsm.hamming_loss
 ##            self.dsm.loss_augmented_inference = \

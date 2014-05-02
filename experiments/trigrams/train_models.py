@@ -29,7 +29,7 @@ fw_rm_feats = {'first_word': True,
 fw_vbz_sx1_feats = {'first_word': True,
                     'verbs': True,
                     'syntax_lev1': True}
-              
+
 fw_vbz_s_feats = {'first_word': True,
                   'verbs': True,
                   'sentiment': True}
@@ -39,7 +39,7 @@ vbz_posq_feats = {'verbs': True,
 
 fw_posq_feats = {'first_word': True,
                  'relative_position_qtr': True}
-                
+
 rm_posq_feats = {'role_match': True,
                  'relative_position_qtr': True}
 
@@ -54,7 +54,7 @@ sx12_posq_feats = {'syntax_lev1': True,
 
 s_posq_feats = {'sentiment': True,
                 'relative_position_qtr': True}
-                
+
 fw_vbz_posq_feats = {'verbs': True,
                      'first_word': True,
                      'relative_position_qtr': True}
@@ -67,7 +67,7 @@ fw_vbz_sx1_posq_feats = {'first_word': True,
                          'verbs': True,
                          'syntax_lev1': True,
                          'relative_position_qtr': True}
-              
+
 fw_vbz_s_posq_feats = {'first_word': True,
                        'verbs': True,
                        'sentiment': True,
@@ -115,7 +115,7 @@ tpc_settings = [(dict(vbz_feats.items()+tpc_f.items()), 0,
                  'fw_posq_tpc_feats.p'),
                 (dict(rm_feats.items() + tpc_f.items()), 0,
                  'rm_tpc_feats.p'),
-                (dict(rm_posq_feats.items() + tpc_f.items()), 0, 
+                (dict(rm_posq_feats.items() + tpc_f.items()), 0,
                  'rm_posq_tpc_feats.p'),
                 (dict(sx1_feats.items() + tpc_f.items()), 0,
                  'sx1_tpc_feats.p'),
@@ -196,14 +196,14 @@ def main():
             tpc_basename = os.path.basename(tpc_file.replace(u'.txt', u''))
             pfile = u'{}_{}'.format(tpc_basename, pfile)
         pfile = u'{}gram_{}'.format(opts['ngram'], pfile)
-        pfile = u'{}_{}_{}'.format(opts['learner'], 
+        pfile = u'{}_{}_{}'.format(opts['learner'],
                                    opts['loss-func'], pfile)
-         
+
         outfile = os.path.join(outdir, pfile)
         if os.path.exists(outfile):
             print u'{} already exists, moving on...'.format(outfile)
             continue
-        
+
         print u'Training {}...'.format(pfile)
         trainX, gold_trainY = make_data(feats, traindocs,
                                         train_topic_mapper, opts['ngram'])
@@ -244,10 +244,10 @@ def build_topic_mapper(topic_classifier, k):
     def no_class(doc):
         return None
     if topic_classifier is not None:
-        return tm    
+        return tm
     else:
-        return no_class                
-        
+        return no_class
+
 
 def make_data(feats, docs, tmapper, ngram):
     X = [NGramDiscourseInstance(doc, feats, tmapper(doc), ngram)
@@ -258,8 +258,8 @@ def make_data(feats, docs, tmapper, ngram):
 def load_docs(path):
     files = [os.path.join(path, fname) for fname in os.listdir(path)]
     docs = [corenlp.Document(f) for f in files]
-    return docs    
-    
+    return docs
+
 
 def _parse_cmdline():
     parser = argparse.ArgumentParser()
@@ -270,41 +270,41 @@ def _parse_cmdline():
     parser.add_argument(u'-dev', u'--dev-dir',
                         help=u'Test data directory.',
                         type=unicode, required=False)
-        
+
     parser.add_argument(u'-test', u'--test-dir',
                         help=u'Test data directory.',
                         type=unicode, required=True)
 
-    parser.add_argument(u'-od', u'--output-dir', 
+    parser.add_argument(u'-od', u'--output-dir',
                         help=u'Location to write pickled models.',
                         type=unicode, required=True)
 
-    parser.add_argument(u'-t', u'--topic-file', 
+    parser.add_argument(u'-t', u'--topic-file',
                         help=u'Location of topic file if any.',
                         type=unicode, required=False,
                         default=None)
 
-    parser.add_argument(u'-l', u'--learner', 
+    parser.add_argument(u'-l', u'--learner',
                         help=u'Learning algorithm.',
                         type=unicode, required=False,
                         default='perceptron')
 
-    parser.add_argument(u'-lf', u'--loss-function', 
+    parser.add_argument(u'-lf', u'--loss-function',
                         help=u'Loss function.',
                         type=unicode, required=False,
                         default='01')
 
-    parser.add_argument(u'-inf', u'--inference', 
+    parser.add_argument(u'-inf', u'--inference',
                         help=u'LP solver.',
                         type=unicode, required=False,
                         default='gurobi')
 
-    parser.add_argument(u'-n', u'--ngram', 
+    parser.add_argument(u'-n', u'--ngram',
                         help=u'Ngram size of sequence model (2 or 3)',
                         type=int, required=False,
                         default=2)
 
-    parser.add_argument(u'-dbg', u'--debug-mode', 
+    parser.add_argument(u'-dbg', u'--debug-mode',
                         help=u'For debuging only',
                         action='store_true')
 
@@ -348,7 +348,7 @@ def _parse_cmdline():
             args.inference))
         sys.stderr.flush()
         sys.exit()
-    
+
 
     opts['debug'] = args.debug_mode
 
@@ -364,7 +364,7 @@ def _parse_cmdline():
         if not os.path.exists(devdir) or not os.path.isdir(devdir):
             import sys
             sys.stderr.write((u'{} either does not exist ' +
-                              u'or is not a directory.\n').format(testdir))
+                              u'or is not a directory.\n').format(devdir))
             sys.stderr.flush()
             sys.exit()
 
@@ -385,7 +385,7 @@ def _parse_cmdline():
 
     if not os.path.exists(outdir):
         os.makedirs(outdir)
-    
+
     return traindir, testdir, devdir, outdir, tpc_file, opts
 
 if __name__ == '__main__':
