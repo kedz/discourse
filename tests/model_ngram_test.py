@@ -2272,3 +2272,32 @@ class TestNGramModel:
             assert f in valid_feats5
             assert fmap5[f] == 1
 
+    def verb_feature_bigram_test(self):
+        inst = NGramDiscourseInstance(self.doc, {'verbs': True}, None, 2)
+        fmap1 = {}
+        t1 = Transition(('END', 's-1'), 5)
+        inst._f_verbs(fmap1, t1)
+        
+        valid_feats1 = set(['Verbs: hit --> END',
+                            'Verbs: accord --> END',
+                            'Verbs: __ --> END',]) 
+
+        for f in fmap1.keys():
+            assert f in valid_feats1
+            assert fmap1[f] == 1
+
+    def verb_feature_trigram_test(self):
+        inst = NGramDiscourseInstance(self.doc, {'verbs': True}, None, 3)
+        fmap1 = {}
+        t1 = Transition(('s-1', 's-0', 'START'), 3)
+        inst._f_verbs(fmap1, t1)
+        
+        valid_feats1 = set(['Verbs: START --> __ --> hit',
+                            'Verbs: START --> __ --> accord',
+                            'Verbs: START --> __ --> __',]) 
+
+        for f in fmap1.keys():
+            assert f in valid_feats1
+            assert fmap1[f] == 1
+
+
