@@ -27,7 +27,7 @@ class Transition:
         return (self.labels, self.position)
     
     def __eq__(self, other):
-        return isinstance(other, SentenceNGram) and \
+        return isinstance(other, Transition) and \
             self._attrs() == other._attrs()
       
     def __hash__(self):
