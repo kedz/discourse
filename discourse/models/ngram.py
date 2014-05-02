@@ -1,8 +1,9 @@
 import discourse.lattice as lattice
 import textwrap
+import itertools
 
 class NGramDiscourseInstance:
-    """An ngram discourse coherence sequence mode instance for
+    """An ngram discourse coherence sequence model instance for
     predicting the correct order of sentences in a document.
 
 
@@ -113,8 +114,8 @@ class NGramDiscourseInstance:
 #
 #            if self.active_feat.get('discourse_connectives', False):
 #                self._f_discourse_connectives(fmap, transition)
-#            if self.active_feat.get('first_word', False):
-#                self._f_first_word(fmap, transition)
+        if self.active_feat.get('first_word', False):
+            self._f_first_word(fmap, transition)
 #
 #            if self.active_feat.get('syntax_lev1', False):
 #                self._f_syntax_lev(fmap, transition, 1)
@@ -151,6 +152,50 @@ class NGramDiscourseInstance:
 
             #self._f_cache[transition] = fmap
         return fmap
+
+    def _f_first_word(self, fmap, transition):
+        """ Marks the sequence first words of the sentences selected
+        by the graph edge *transition*.
+        E.g. 'a' ---> 'the' .
+
+        Parameters
+        ----------
+        fmap : dict (string -> int)
+            A dict mapping feature names to feature values
+            for this transition. This function mutates this dict.
+
+        transition : Transition
+            The graph edge, from which this function
+            extracts features.
+        """
+
+        nsents = len(self.doc.sents)
+        def extract_fws(label):
+            idx = lattice.s2i(label, end=nsents)
+            if idx == -1:
+                return ['START']
+            elif idx == nsents:
+                return ['END']
+            else:
+                t = self.doc.sents[idx].tokens[0]
+                if t.ne == 'O':
+                    return [t.lem.lower(), u'__']
+                else:
+                    return [t.lem.lower(), t.ne, u'__']
+
+        feature_combs = [extract_fws(label) 
+                         for label in transition.labels[::-1]]
+        null_p = tuple([u'__']) * len(feature_combs)
+
+        for p in itertools.product(*feature_combs):
+            p = tuple(p) 
+            if p == null_p:
+                continue
+            
+            # Mark the feature
+            fstr = u'First Word: {}'.format(u' --> '.join(p))
+            fmap[fstr] = 1
+                
 
     def _f_debug(self, fmap, transition):
         s2i = lattice.s2i
