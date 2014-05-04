@@ -30,7 +30,12 @@ CS_DIR=$DISCOURSE_DATA/cluster_sequences
 #python train_models.py -train $APWS_TRAIN -dev $APWS_DEV -test $APWS_DEV -od models/apws_models -l sg-ssvm -lf hamming-edge -inf gurobi -n 3 -dbg
 
 
+<<<<<<< HEAD
 python train_models.py -train $APWS_TRAIN -dev $APWS_DEV -test $APWS_TEST -od models/apws_models -l perceptron -lf 01 -inf glpk -n 3
+=======
+# python train_models.py -train $APWS_TRAIN -dev $APWS_DEV -test $APWS_TEST -od models/apws_models2 -l perceptron -lf 01 -inf glpk -n 2
+python train_models.py -train $APWS_TRAIN -dev $APWS_DEV -test $APWS_TEST -od models/apws_models3 -l perceptron -lf 01 -inf glpk -n 3
+>>>>>>> 18883f4e672ca3105a00f22c9c4d2cf7c3898dd7
 
 # python train_models.py -train $APWS_TRAIN -dev $APWS_DEV -test $APWS_TEST -od models/apws_models -l perceptron -lf 01 -inf gurobi -n 3
 

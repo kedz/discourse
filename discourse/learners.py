@@ -39,17 +39,27 @@ class DiscourseSequenceModel(model.DynamicProgrammingModel):
         constraints = cons.Constraints(hypergraph,
                                 [('s-{}'.format(i), -1)
                                  for i in range(nsents)])
-        constraints.from_vector([lattice.build_constraints(edge.label)
-                                 for edge in hypergraph.edges])
+        print "gen"
+        g = [lattice.build_constraints(edge.label)
+             for edge in hypergraph.edges]
+        print "done"
+        constraints.from_vector(g)
+        print "vec"
+        return constraints
+
         return constraints
 
     def beam_constraints(self, discourse_model, hypergraph):
         """
         For beam search. Transposed constraints.
         """
+        print "gen"
+        gen = [ph.Bitset(edge.label.to)
+               for edge in hypergraph.edges]
+        print "done"
         constraints = ph.BinaryVectorPotentials(hypergraph) \
-            .from_vector([lattice.build_beam_constraints(edge.label)
-                          for edge in hypergraph.edges])
+            .from_vector(gen)
+        print "vec"
         return constraints
 
     def build_groups(self, hypergraph):
@@ -116,7 +126,7 @@ class DiscourseSequenceModel(model.DynamicProgrammingModel):
         if beam:
             beam_constraints = self.beam_constraints(x, hypergraph)
         
-        else:
+        beam_constraints = self.beam_constraints(x, hypergraph)
             constraints = self.constraints(x, hypergraph)
         elapsed_time = int(round(time.time() * 1000)) - start_time
         if verbose:
@@ -143,11 +153,16 @@ class DiscourseSequenceModel(model.DynamicProgrammingModel):
 
         # BEAM SEARCH
         else:
+<<<<<<< HEAD
             if verbose:
                 print "Running Beam Search"
+=======
+            print "start beam"
+>>>>>>> 18883f4e672ca3105a00f22c9c4d2cf7c3898dd7
             groups = self.build_groups(hypergraph)
             num_groups = max(groups) + 1
 
+            print len(hypergraph.edges), len(hypergraph.nodes)
             in_chart = ph.inside(hypergraph, potentials)
             out = ph.outside(hypergraph, potentials, in_chart)
 
