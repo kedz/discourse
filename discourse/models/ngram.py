@@ -1,6 +1,7 @@
 import discourse.lattice as lattice
 import textwrap
 import itertools
+from collections import defaultdict
 
 class NGramDiscourseInstance:
     """An ngram discourse coherence sequence model instance for
@@ -246,39 +247,36 @@ class NGramDiscourseInstance:
 
     def _f_role_match(self, fmap, transition):
 
-        ent_roles = []
-        ents = set()
+        sent_ent_roles = []
         for label in transition.labels[::-1]:
             idx = lattice.s2i(label, end=self.nsents)
             if idx == -1:         
-                #ent_roles.append([('START', 'START')])
-                ents.add('START')
+                sent_ent_roles.append(defaultdict(lambda: ['START']))
             elif idx == self.nsents:
-                #ent_roles.append([('END', 'END')])
-                ents.add('END')
+                sent_ent_roles.append(defaultdict(lambda: ['END']))
             else:
                 s = self.doc.sents[idx]
-                sent_ent_roles = {ent_role[0]: ent_role[1] 
-                                  for ent_role in self._entity_roles(s)
-                                  if self.entity_counts[ent_role[0]] > 1}
+                sermap = defaultdict(lambda: ['X', '__'])
+                for ent_role in self._entity_roles(s):
+                    if self.entity_counts[ent_role[0]] > 1:
+                        sermap[ent_role[0]] = [ent_role[1], '__'] 
+                sent_ent_roles.append(sermap)
                 
+        null_p = tuple([u'__']) * self.ngram
         for ent, cnt in self.entity_counts.iteritems():
             if cnt > 1:
-                print 'Checking ent:', ent, cnt
-                #for     
-                     
+                       
+                feature_combs = [sermap[ent] for sermap in sent_ent_roles]
 
-#        for p in itertools.product(*ent_roles):
-#            print p
-            
-            #p = tuple(p) 
-            #if p == null_p:
-            #    continue
-            
-            # Mark the feature
-            #fstr = u'Verbs: {}'.format(u' --> '.join(p))
-            #fmap[fstr] = 1
-               
+                for p in itertools.product(*feature_combs):
+                    p = tuple(p) 
+                    if p == null_p:
+                        continue
+                    
+                    # Mark the feature
+                    fstr = u'Role Match: {}'.format(u' --> '.join(p))
+                    score = fmap.get(fstr, 0)                
+                    fmap[fstr] = score + 1
 
     def _entity_roles(self, s):
         """ Returns a set of entity, role tuples for a sentence s.
