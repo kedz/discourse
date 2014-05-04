@@ -224,7 +224,8 @@ def main():
                          },
                         f)
 
-        print pfile, learner.learner.w
+
+        #print pfile, learner.learner.w
 def build_learner(opts):
     use_gurobi = True if opts['inference'] == 'gurobi' else False
     return learners.Learner(use_gurobi, False, False, opts['learner'],
