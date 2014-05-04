@@ -8,6 +8,8 @@ from itertools import izip
 import numpy as np
 import pulp
 import discourse.lattice as lattice
+from datetime import datetime, timedelta
+import time
 
 class DiscourseSequenceModel(model.DynamicProgrammingModel):
     def __init__(self, constrained=True, use_gurobi=True,
@@ -21,6 +23,11 @@ class DiscourseSequenceModel(model.DynamicProgrammingModel):
         self._use_relaxed = use_relaxed
         self._debug = verbose
 
+        self._total_graph_cons_time = 0
+        self._total_potential_cons_time = 0
+        self._total_constraint_cons_time = 0
+        self._total_inference_time = 0
+    
     def dynamic_program(self, discourse_model, c):
         return lattice.build_ngram_lattice(discourse_model, c)
 
@@ -53,7 +60,7 @@ class DiscourseSequenceModel(model.DynamicProgrammingModel):
 
     def loss(self, y, y_hat):
         if self._loss_function == '01':
-            return self.zero_one_loss(y, y_hat, verbose=True)
+            return self.zero_one_loss(y, y_hat, verbose=False)
         elif self._loss_function == 'hamming-node':
             return self.hamming_node_loss(y, y_hat)
         elif self._loss_function == 'hamming-edge':
@@ -86,29 +93,59 @@ class DiscourseSequenceModel(model.DynamicProgrammingModel):
         return total_loss
 
     # Overloading inference to try beam search.
-    def inference(self, x, w, relaxed=False, beam=True):
+    def inference(self, x, w, relaxed=False, beam=True, verbose=True):
         self.inference_calls += 1
+
+        start_time = int(round(time.time() * 1000)) 
         hypergraph = self._build_hypergraph(x)
+        elapsed_time = int(round(time.time() * 1000)) - start_time
+        if verbose:
+            print 'Graph Construction Time (size: {}):'.format(x.nsents),
+            print str(timedelta(milliseconds=elapsed_time))
+        self._total_graph_cons_time += elapsed_time
+        
+        start_time = int(round(time.time() * 1000)) 
         potentials = self._build_potentials(hypergraph, x, w)
-        constraints = self.constraints(x, hypergraph)
-        beam_constraints = self.beam_constraints(x, hypergraph)
+        elapsed_time = int(round(time.time() * 1000)) - start_time
+        if verbose:
+            print 'Edge Potential Construction Time:',
+            print str(timedelta(milliseconds=elapsed_time))
+        self._total_potential_cons_time += elapsed_time
+
+        start_time = int(round(time.time() * 1000)) 
+        if beam:
+            beam_constraints = self.beam_constraints(x, hypergraph)
+        
+        else:
+            constraints = self.constraints(x, hypergraph)
+        elapsed_time = int(round(time.time() * 1000)) - start_time
+        if verbose:
+            print 'Constraint Construction Time:',
+            print str(timedelta(milliseconds=elapsed_time))
+        self._total_constraint_cons_time += elapsed_time
+
+        
 
         # FOR DEBUGGING
 
+        start_time = int(round(time.time() * 1000))
         if not beam:
-            print "Running ILP"
+            if verbose:
+                print "Running ILP"
             hyperlp = lp.HypergraphLP.make_lp(hypergraph,
                                               potentials,
                                               integral=True)
             hyperlp.add_constraints(constraints)
             hyperlp.solve(pulp.solvers.GLPK(mip=1))
-            print "OBJECTIVE",str(hyperlp.objective)
+            if verbose:
+                print "ILP OBJECTIVE",str(hyperlp.objective)
             path = hyperlp.path
 
         # BEAM SEARCH
         else:
+            if verbose:
+                print "Running Beam Search"
             groups = self.build_groups(hypergraph)
-            print groups
             num_groups = max(groups) + 1
 
             in_chart = ph.inside(hypergraph, potentials)
@@ -123,7 +160,15 @@ class DiscourseSequenceModel(model.DynamicProgrammingModel):
                                                      [1000] * num_groups,
                                                      num_groups)
             path = beam_chart.path(0)
-        print "OBJECTIVE", potentials.dot(path)
+
+        if verbose:
+            print "OBJECTIVE", potentials.dot(path)
+
+        elapsed_time = int(round(time.time() * 1000)) - start_time
+        if verbose:
+            print 'Inference Time:',
+            print str(timedelta(milliseconds=elapsed_time))
+        self._total_inference_time += elapsed_time
 
         y = set([edge.label for edge in path])
         return y
@@ -249,7 +294,7 @@ class DiscourseSequenceModel(model.DynamicProgrammingModel):
             l = lf(y, [edge.label])
             scores[i] += l
 
-        return ph.Potentials(hypergraph).from_vector(scores)
+        return ph.LogViterbiPotentials(hypergraph).from_vector(scores)
 
     def joint_feature(self, x, y):
         joint_feature_map = {}
@@ -263,6 +308,22 @@ class DiscourseSequenceModel(model.DynamicProgrammingModel):
         f = np.array(f.todense()).flatten().transpose()
         return f
 
+    def _lattice_constraints(self, x):
+
+        height = x.nsents**x.ngrams
+        width = x.nsents
+        
+        cons = []
+        if x.ngrams == 2:
+            for i in xrange(height):
+                for j in xrange(height):
+                    if i != j:
+                        cons.append(tuple([i,j]))
+        else:
+            for i in xrange(1, height + 1):
+                for j in xrange(1, height + 1):
+                    if i != j and ((i-1) % width) == (i - 1) / width:
+                        cons.append(tuple([i,j]))              
 
 class Learner:
     def __init__(self, use_gurobi=True,
