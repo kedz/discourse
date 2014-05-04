@@ -32,17 +32,25 @@ class DiscourseSequenceModel(model.DynamicProgrammingModel):
         constraints = cons.Constraints(hypergraph,
                                 [('s-{}'.format(i), -1)
                                  for i in range(nsents)])
-        constraints.from_vector([lattice.build_constraints(edge.label)
-                                 for edge in hypergraph.edges])
+        print "gen"
+        g = [lattice.build_constraints(edge.label)
+             for edge in hypergraph.edges]
+        print "done"
+        constraints.from_vector(g)
+        print "vec"
         return constraints
 
     def beam_constraints(self, discourse_model, hypergraph):
         """
         For beam search. Transposed constraints.
         """
+        print "gen"
+        gen = [ph.Bitset(edge.label.to)
+               for edge in hypergraph.edges]
+        print "done"
         constraints = ph.BinaryVectorPotentials(hypergraph) \
-            .from_vector([lattice.build_beam_constraints(edge.label)
-                          for edge in hypergraph.edges])
+            .from_vector(gen)
+        print "vec"
         return constraints
 
     def build_groups(self, hypergraph):
@@ -88,10 +96,16 @@ class DiscourseSequenceModel(model.DynamicProgrammingModel):
     # Overloading inference to try beam search.
     def inference(self, x, w, relaxed=False, beam=True):
         self.inference_calls += 1
+        print "building "
         hypergraph = self._build_hypergraph(x)
-        potentials = self._build_potentials(hypergraph, x, w)
-        constraints = self.constraints(x, hypergraph)
         beam_constraints = self.beam_constraints(x, hypergraph)
+        # print "constraints"
+        # constraints = self.constraints(x, hypergraph)
+
+        print "pots "
+        potentials = self._build_potentials(hypergraph, x, w)
+        print "done constraints"
+
 
         # FOR DEBUGGING
 
@@ -107,10 +121,11 @@ class DiscourseSequenceModel(model.DynamicProgrammingModel):
 
         # BEAM SEARCH
         else:
+            print "start beam"
             groups = self.build_groups(hypergraph)
-            print groups
             num_groups = max(groups) + 1
 
+            print len(hypergraph.edges), len(hypergraph.nodes)
             in_chart = ph.inside(hypergraph, potentials)
             out = ph.outside(hypergraph, potentials, in_chart)
 
