@@ -23,7 +23,8 @@ class Transition:
     def __init__(self, labels, position):
         self.labels = labels
         self.position = position
-        self.to = s2i(labels[0], end=position)
+        self.idxs = [s2i(label, end=position) for label in labels]
+        self.to = self.idxs[0]
 
     def _attrs(self):
         return (self.labels, self.position)
