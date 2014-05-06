@@ -363,8 +363,12 @@ def kendalls_tau(transitions):
 
     returns (kt, pval)
     """
+    ordered_trans = recover_order(transitions)
+    if len(ordered_trans) == 0:
+        import sys
+        sys.exit()
     # Get list sentence indices implied by the transition set.
-    indices = [s2i(t.labels[0]) for t in recover_order(transitions)[:-1]]
+    indices = [s2i(t.labels[0]) for t in ordered_trans[:-1]]
     # Get gold indices.
     gold = [i for i in range(len(indices))]
     # Compute Kendall's tau for these two sequences.
