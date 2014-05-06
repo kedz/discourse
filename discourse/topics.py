@@ -1,10 +1,11 @@
 import codecs
 from collections import namedtuple, defaultdict
 from math import sqrt
+import os
 
 Sentence = namedtuple('Sentence', ['unigrams', 'bigrams', 'trigrams', 'half'])
 
-def load_topics(fname):
+def load_clusters(fname):
     data = []
 
     sequences = []
@@ -17,7 +18,7 @@ def load_topics(fname):
                     sequences.append(sequence)
                 sequence = []
             else:                
-                topic, text = line.split(u'_@@_')
+                topic, text = line.split(u'\t')
                 topic = topic.strip()
                 text = text.strip().split(u' ')
                 #print topic, text
@@ -32,10 +33,22 @@ def load_topics(fname):
         sims = [(sentence_sim(instance, x), y) for y, x in data]
         sims.sort(key=lambda x: x[0], reverse=True)
         counts = defaultdict(int)
-        for score, label in sims[0:10]:
+        for score, label in sims[0:k]:
             counts[label] += 1
         votes = sorted(counts.items(), key=lambda x: x[1], reverse=True)
         return votes[0][0]
+    return classify
+
+def load_multigran_clusters(dirname):
+    cluster_classifiers = {}
+    for fname in os.listdir(dirname):
+        fpath = os.path.join(dirname, fname)
+        cluster_classifiers[fname] = load_clusters(fpath)
+    def classify(instance, k):
+        classes = {}
+        for gran, g_classify in cluster_classifiers.items():
+            classes[gran] = g_classify(instance, k)
+        return classes
     return classify
 
 def sentence_sim(sent1, sent2):
@@ -61,21 +74,18 @@ stopwords = set(["the", "a", "an", "'s", "had", "have", "has", "were",
                  ":", "!", "?", "*", "+", "/", "(", ")", ",[", "]", "\"",
                  "'", "`", "''", "``"])
 
-def filter_unigrams(sent):
+def filter_tokens(cnlp_sentence):
 
     valid_lemmas = []
-    for t in sent:
+    for t in cnlp_sentence:
         if t.ne != 'O':
             valid_lemmas.append(t.ne)
         elif unicode(t).lower() not in stopwords:
             valid_lemmas.append(t.lem.lower())
     return valid_lemmas
 
-def unigrams(sent):
-    ugrm = set()
-    for word in filter_unigrams(sent):
-        ugrm.add(word)
-    return frozenset(ugrm)
+def unigrams(tokens):
+    return frozenset(tokens)
         
 def bigrams(tokens):
     bgrm = set()
