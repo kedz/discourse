@@ -10,9 +10,10 @@ import pandas as pd
 from itertools import izip
 import textwrap
 import codecs
+from datetime import datetime
 
 def make_data(feats, docs, tmapper, ngram):
-    X = [NGramDiscourseInstance(doc, feats, tmapper(doc), ngram)
+    X = [NGramDiscourseInstance(doc, feats, tmapper(doc), ngram, False)
          for doc in docs]
     Y = [x.gold_transitions() for x in X]
     return X, Y
@@ -53,43 +54,52 @@ def main():
     testdir = d['testdir']
     tpc_file = d['topic_files']
     ngram = d['ngram']
+    training_time = d['traintime']
 
-    print learner.learner.w
     if tpc_file is not None: 
-        topic_classifier = topics.load_topics(tpc_file)
-        train_topic_mapper = build_topic_mapper(topic_classifier, 1)
-        test_topic_mapper = build_topic_mapper(topic_classifier, 1)
+        topic_classifier = topics.load_multigran_clusters(tpc_file)
+        topic_mapper = build_topic_mapper(topic_classifier, 1)
     else:
-        train_topic_mapper = lambda x: None
-        test_topic_mapper = lambda x: None
+        topic_mapper = lambda x: None
+        topic_mapper = lambda x: None
 
     traindocs = load_docs(traindir)
     testdocs = load_docs(testdir)
     devdocs = load_docs(devdir)
     
     trainX, gtrainY = make_data(feats, traindocs,
-                                train_topic_mapper, ngram)
+                                topic_mapper, ngram)
+    start_time = datetime.now()
     ptrainY = learner.predict(trainX)
+    predict_training_time = datetime.now() - start_time
 
     devX, gdevY = make_data(feats, devdocs,
-                                train_topic_mapper, ngram)
+                                topic_mapper, ngram)
+    start_time = datetime.now()
     pdevY = learner.predict(devX)
+    predict_dev_time = datetime.now() - start_time
 
 
     testX, gtestY = make_data(feats, testdocs,
-                              test_topic_mapper, ngram)
+                              topic_mapper, ngram)
+    start_time = datetime.now()
     ptestY = learner.predict(testX)
+    predict_test_time = datetime.now() - start_time
 
 
     with codecs.open(ofile, 'w', 'utf-8') as out:
 
-        out.write(unicode(model_metrics(ptrainY, pdevY, ptestY)))
-        out.write(u'\n')
+        out.write(unicode(model_metrics(ptrainY, predict_training_time,
+                                        pdevY, predict_dev_time,
+                                        ptestY, predict_test_time)))
+        out.write(u'\n\n')
+        out.flush()
+
+        out.write(u'Training time in hh:mm:ss : {}\n\n'.format(training_time))
         out.flush()
 
         write_explanation(trainX, gtrainY, ptrainY, out, 'TRAIN', learner)
         write_explanation(devX, gdevY, pdevY, out, 'DEV', learner)
-
         write_explanation(testX, gtestY, ptestY, out, 'TEST', learner)
 
 
@@ -134,7 +144,7 @@ def write_explanation(dataX, gdataY, pdataY, out, name, learner):
     out.write(u'\n\n')
     out.flush()
 
-def model_metrics(ptrainY, pdevY, ptestY):
+def model_metrics(ptrainY, traintime, pdevY, devtime, ptestY, testtime):
     train_kt, train_pval = evaluation.avg_kendalls_tau(ptrainY)
     dev_kt, dev_pval = evaluation.avg_kendalls_tau(pdevY)
     test_kt, test_pval = evaluation.avg_kendalls_tau(ptestY)
@@ -147,15 +157,17 @@ def model_metrics(ptrainY, pdevY, ptestY):
     dev_oso_acc = evaluation.avg_oso_acc(pdevY)
     test_oso_acc = evaluation.avg_oso_acc(ptestY)
     
-    data = [[train_kt, train_pval, train_bg, train_oso_acc],
-            [dev_kt, dev_pval, dev_bg, dev_oso_acc],
-            [test_kt, test_pval, test_bg, test_oso_acc]]
+    data = [[train_kt, train_pval, train_bg, 
+             train_oso_acc, traintime],
+            [dev_kt, dev_pval, dev_bg, dev_oso_acc, devtime],
+            [test_kt, test_pval, test_bg,
+             test_oso_acc, testtime]]
 
 
     return pd.DataFrame(data,
                         index=(u'train', u'dev', u'test'),
                         columns=(u'Kendalls Tau', u'KT pvalue',
-                                 u'Bigram Acc.', u'OSO Acc.'))
+                                 u'Bigram Acc.', u'OSO Acc.', u'time'))
 
 
 def _parse_cmdline():
