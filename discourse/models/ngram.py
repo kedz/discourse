@@ -40,7 +40,9 @@ class NGramDiscourseInstance:
         self._topic_map = topic_map
         self.ngram = ngram
         self._use_cache = use_cache
-
+        self._verb_cache = [None for s in doc.sents]
+        self._syntax_cache = [[None, None, None] for s in doc.sents]
+        self._fw_cache = [None for s in doc.sents]
 
     def _build_entity_counts(self, doc):
         """ Build a dict of occurrence counts of noun tokens in this
@@ -194,12 +196,13 @@ class NGramDiscourseInstance:
             elif idx == nsents:
                 return ['END']
             else:
-                t = self.doc.sents[idx].tokens[0]
-                if t.ne == 'O':
-                    return [t.lem.lower(), u'__']
-                else:
-                    return [t.lem.lower(), t.ne, u'__']
-
+                if self._fw_cache[idx] is None:
+                    t = self.doc.sents[idx].tokens[0]
+                    if t.ne == 'O':
+                        self._fw_cache[idx] = [t.lem.lower(), u'__']
+                    else:
+                        self._fw_cache[idx] = [t.lem.lower(), t.ne, u'__']
+                return self._fw_cache[idx] 
         feature_combs = [extract_fws(label) 
                          for label in transition.labels[::-1]]
         null_p = tuple([u'__']) * len(feature_combs)
@@ -216,19 +219,22 @@ class NGramDiscourseInstance:
     def _f_verbs(self, fmap, transition):
         
         nsents = len(self.doc)
-        def extract_verbs(label):
-            idx = lattice.s2i(label, end=nsents)
+        def extract_verbs(idx):
+     
             if idx == -1:
                 return ['START']
             elif idx == nsents:
                 return ['END']
             else:
-                s = self.doc.sents[idx]
-                verbs = [t.lem.lower() for t in s.tokens if 'VB' in t.pos]
-                return set(verbs).union(set(['__']))
-        
-        feature_combs = [extract_verbs(label) 
-                         for label in transition.labels[::-1]]
+                if self._verb_cache[idx] is None:
+                    s = self.doc.sents[idx]
+                    verbs = [t.lem.lower() for t in s.tokens if 'VB' in t.pos]
+                    
+                    self._verb_cache[idx] = set(verbs).union(set(['__']))
+                return self._verb_cache[idx]
+                
+        feature_combs = [extract_verbs(idx) 
+                         for idx in transition.idxs[::-1]]
         null_p = tuple([u'__']) * len(feature_combs)
 
         for p in itertools.product(*feature_combs):
@@ -387,9 +393,12 @@ class NGramDiscourseInstance:
             elif idx == self.nsents:
                 productions.append(['END'])
             else:
-                tree = self.doc.sents[idx].parse
-                prod = self.syn_sequence(tree, depth)
-                productions.append([prod, '__'])    
+                if self._syntax_cache[idx][depth] is None:
+                    tree = self.doc.sents[idx].parse
+                    prod = self.syn_sequence(tree, depth)
+                    self._syntax_cache[idx][depth] = [prod, '__']
+                    
+                productions.append(self._syntax_cache[idx][depth])    
 
         null_p = tuple([u'__']) * self.ngram
 
