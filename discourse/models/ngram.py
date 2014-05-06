@@ -2,6 +2,7 @@ import discourse.lattice as lattice
 import textwrap
 import itertools
 from collections import defaultdict
+import nltk
 
 class NGramDiscourseInstance:
     """An ngram discourse coherence sequence model instance for
@@ -29,7 +30,8 @@ class NGramDiscourseInstance:
 
     """
 
-    def __init__(self, doc, features=None, topic_map=None, ngram=3):
+    def __init__(self, doc, features=None, topic_map=None,
+                 ngram=3, use_cache=False):
         self.doc = doc
         self.nsents = len(doc.sents)
         self.active_feat = active_features if features is None else features
@@ -37,6 +39,7 @@ class NGramDiscourseInstance:
         self._f_cache = {}
         self._topic_map = topic_map
         self.ngram = ngram
+        self._use_cache = use_cache
 
 
     def _build_entity_counts(self, doc):
@@ -97,33 +100,35 @@ class NGramDiscourseInstance:
             graph edge that corresponds to transition.
         """
 
+        
+
         # Check the cache if we have already created this transition's
         # feature map, otherwise create a new one.
-        #if transition in self._f_cache:
-        #    fmap = self._f_cache[transition]
-        #    return fmap
 
-        #else:
+        if transition in self._f_cache and self._use_cache is True:
+            return self._f_cache[transition]
+
+        else:
 
             # Create an empty feature map for this transition.
-        fmap = {}
+            fmap = {}
 
-            ### Call each feature function if active. ###
-        if self.active_feat.get('role_match', False):
-            self._f_role_match(fmap, transition)
+                ### Call each feature function if active. ###
+            if self.active_feat.get('role_match', False):
+                self._f_role_match(fmap, transition)
 #
 #            if self.active_feat.get('discourse_new', False):
 #                self._f_discourse_new(fmap, transition)
 #
 #            if self.active_feat.get('discourse_connectives', False):
 #                self._f_discourse_connectives(fmap, transition)
-        if self.active_feat.get('first_word', False):
-            self._f_first_word(fmap, transition)
+            if self.active_feat.get('first_word', False):
+                self._f_first_word(fmap, transition)
 #
-#            if self.active_feat.get('syntax_lev1', False):
-#                self._f_syntax_lev(fmap, transition, 1)
-#            if self.active_feat.get('syntax_lev2', False):
-#                self._f_syntax_lev(fmap, transition, 2)
+            if self.active_feat.get('syntax_lev1', False):
+                self._f_syntax_lev(fmap, transition, 1)
+            if self.active_feat.get('syntax_lev2', False):
+                self._f_syntax_lev(fmap, transition, 2)
 #
 #            if self.active_feat.get('personal_pronoun_res', False):
 #                self._f_personal_pronoun_res(fmap, transition)
@@ -131,11 +136,9 @@ class NGramDiscourseInstance:
 #            if self.active_feat.get('ne_types', False):
 #                self._f_ne_types(fmap, transition)
 #
-#            if self.active_feat.get('verbs', False):
-#                self._f_verbs(fmap, transition)
-#            
-#            if self.active_feat.get('topics', False):
-#                self._f_topics(fmap, transition)
+            if self.active_feat.get('verbs', False):
+                self._f_verbs(fmap, transition)
+            
 #
 #            
 #            if self.active_feat.get('relative_position', False):
@@ -145,17 +148,27 @@ class NGramDiscourseInstance:
 #            if self.active_feat.get('sentiment', False):
 #                self._f_sentiment(fmap, transition)
 #
-#            if self.active_feat.get('topics_rewrite', False):
-#                self._f_topics_rewrite(fmap, transition)
-            
-        if self.active_feat.get(u'debug', False):
-            self._f_debug(fmap, transition)
+            if self.active_feat.get('topics_rewrite_20', False):
+                self._f_topics_rewrite(fmap, transition, '20')
+            if self.active_feat.get('topics_rewrite_40', False):
+                self._f_topics_rewrite(fmap, transition, '40')
+            if self.active_feat.get('topics_rewrite_60', False):
+                self._f_topics_rewrite(fmap, transition, '60')
+            if self.active_feat.get('topics_rewrite_80', False):
+                self._f_topics_rewrite(fmap, transition, '80')
+            if self.active_feat.get('topics_rewrite_100', False):
+                self._f_topics_rewrite(fmap, transition, '100')
+                
+            if self.active_feat.get(u'debug', False):
+                self._f_debug(fmap, transition)
 
-        if self.active_feat.get('relative_position_qtr', False):
-            self._f_relative_position_qtr(fmap, transition)
-
-            #self._f_cache[transition] = fmap
-        return fmap
+            if self.active_feat.get('topics', False):
+                self._f_topics(fmap, transition)
+            if self.active_feat.get('relative_position_qtr', False):
+                self._f_relative_position_qtr(fmap, transition)
+            if self._use_cache is True:
+                self._f_cache[transition] = fmap
+            return fmap
 
     def _f_first_word(self, fmap, transition):
         """ Marks the sequence first words of the sentences selected
@@ -264,19 +277,22 @@ class NGramDiscourseInstance:
                 
         null_p = tuple([u'__']) * self.ngram
         for ent, cnt in self.entity_counts.iteritems():
-            if cnt > 1:
                        
-                feature_combs = [sermap[ent] for sermap in sent_ent_roles]
+            feature_combs = [sermap[ent] for sermap in sent_ent_roles]
 
-                for p in itertools.product(*feature_combs):
-                    p = tuple(p) 
-                    if p == null_p:
-                        continue
-                    
-                    # Mark the feature
-                    fstr = u'Role Match: {}'.format(u' --> '.join(p))
-                    score = fmap.get(fstr, 0)                
-                    fmap[fstr] = score + 1
+            for p in itertools.product(*feature_combs):
+                p = tuple(p) 
+                if p == null_p:
+                    continue
+                
+                # Mark the feature
+                fstr = u'Role Match: {}'.format(u' --> '.join(p))
+
+                if cnt > 1:
+                    fstr = u'Salient {}'.format(fstr)
+                score = fmap.get(fstr, 0)                
+                fmap[fstr] = score + 1
+
 
     def _entity_roles(self, s):
         """ Returns a set of entity, role tuples for a sentence s.
@@ -345,8 +361,110 @@ class NGramDiscourseInstance:
 #                    s_ents.add((rel.dep, 'other'))
 #        return s_ents
 
-               
 
+    def _f_syntax_lev(self, fmap, transition, depth):
+        """ Marks the non-terminal sequence transition in the
+        feature map. E.g. S , NP VP . ---> NP VP .
+
+        Parameters
+        ----------
+        fmap : dict (string -> int)
+            A dict mapping feature names to feature values
+            for this transition. This function mutates this dict.
+
+        transition : Transition
+            the graph transition, for which this function
+            extracts features.
+
+        depth : int
+            The depth of the sequence to extract from the parse
+            tree.
+        """
+        productions = []
+        for idx in transition.idxs[::-1]:
+            if idx == -1:         
+                productions.append(['START'])
+            elif idx == self.nsents:
+                productions.append(['END'])
+            else:
+                tree = self.doc.sents[idx].parse
+                prod = self.syn_sequence(tree, depth)
+                productions.append([prod, '__'])    
+
+        null_p = tuple([u'__']) * self.ngram
+
+        for p in itertools.product(*productions):
+            p = tuple(p) 
+            if p == null_p:
+                continue
+            
+            # Mark the feature
+            fstr = u'Syntax ({}): {}'.format(depth, u' --> '.join(p))
+            fmap[fstr] = 1
+
+
+
+    def syn_sequence(self, parse_tree, depth):
+        """
+        Given a parse tree, return the sequence of non-terminals at a
+        given depth. See Louis & Nenkova, 2012 for details.
+        """
+        seqs = [[]]
+        Q = []
+        d = 0
+        curr_d = d
+        Q.append((parse_tree[0], d))
+        while len(Q) > 0 and curr_d <= depth:
+            nt, nt_d = Q.pop(0)
+            if nt_d != curr_d:
+                curr_d = nt_d
+                seqs.append([])
+            if isinstance(nt, nltk.Tree):
+                seqs[nt_d].append(nt.node)
+                for c in nt:
+                    Q.append((c, nt_d+1))
+
+        if depth < len(seqs):
+            return u' '.join(seqs[depth])
+        else:
+            return u''      
+
+    def _f_topics(self, fmap, transition):
+
+        # Get topic granularities        
+        grans = self._topic_map[0].keys()
+        null_p = tuple([u'__']) * self.ngram
+        
+        for gran in grans:
+            topics = []    
+            for idx in transition.idxs[::-1]:
+                if idx == -1:
+                    topics.append(['START'])
+                elif idx == self.nsents:
+                    topics.append(['END'])
+                else:
+                    topics.append([self._topic_map[idx][gran], '__'])
+                       
+            for p in itertools.product(*topics):
+                p = tuple(p) 
+                if p == null_p:
+                    continue
+                
+                # Mark the feature
+                fstr = u'Topics ({}): {}'.format(gran, u' --> '.join(p))
+                fmap[fstr] = 1
+
+    def _f_topics_rewrite(self, fmap, transition, granularity):
+
+        idx = transition.idxs[0]
+        if idx == -1 or idx == self.nsents:
+            return
+        topic = self._topic_map[idx][granularity]
+
+        for feat, val in fmap.items():
+            fstr = u'(TPC (Gran {}) {}) {}'.format(granularity, topic, feat)
+            fmap[fstr] = val
+ 
     def _f_debug(self, fmap, transition):
         s2i = lattice.s2i
         nsents = len(self.doc.sents)
