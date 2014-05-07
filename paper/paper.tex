@@ -1,8 +1,26 @@
 \documentclass[11pt]{article}
 \usepackage{acl2014}
+
+\usepackage{amssymb}
 \usepackage{times}
 \usepackage{url}
 \usepackage{latexsym}
+\usepackage{todonotes}
+
+\newcommand{\Word}{w}
+\newcommand{\Structs}{{\cal Y}}
+\newcommand{\Sent}{s}
+\newcommand{\IndexSet}{{\cal I}}
+\newcommand{\Sents}{{\cal S}}
+\newcommand{\Order}{\sigma}
+\newcommand{\Enum}[1]{\{ 1 \ldots #1 \}}
+\newcommand{\Set}[1]{\big\{ #1 \big\}}
+\newcommand{\Bin}[1]{\{0,1\}^{#1}}
+\newcommand{\Reals}{{\mathbb R}}
+
+\newcommand{\Ver}{{\cal V}}
+\newcommand{\Edges}{{\cal E}}
+
 
 %\setlength\titlebox{5cm}
 
@@ -10,6 +28,10 @@
 % to show all the authors. Please do not make the titlebox
 % smaller than 5cm (the original size); we will check this
 % in the camera-ready version and ask you to change it back.
+
+\usepackage{amsmath}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
 
 
 \title{Discourse}
@@ -35,21 +57,133 @@
 
 \section{Introduction}
 
-Automatic coherence assessment has typically examined the effect of local discourse features on coherence. These features are typically sentence-to-sentence transitions of entities, discourse relations, or other sentential information.
+Automatic coherence assessment has typically examined the effect of local discourse features on coherence. These features are typically sentence-to-sentence transitions of entities, discourse relations, or other sentential information. 
 Additionally, this task is often framed as selecting the most coherent ordering of a set of sentences in a document, where the original ordering as written by a human is assumed to be the most coherent ordering.
 
-\section{General Instructions}
+% Pitchy
+
+\section{Overview}
+
+% High-level description of the problem.
+
+% Ranking versus finding the best. 
+
+% Graph, data analysis. 
+
+\section{Background}
+
+% Mathematical view of the problem.
+
+For a given document, $x$ we assume  a bag of sentences $\Sents$ containing each sentence in a
+document of size $|\Sents| = n$.  Each sentence $\Sent \in \Sents$
+contains a list of words $w_1 \ldots w_m$ (for simplicity, we assume each sentence has the same length $m$). We will also assume that we
+have part-of-speech tags, named entities, and the syntactic tree of
+the sentence.
 
 
+The aim of the ordering problem is to produce an ordering on the sentences in the documents, i.e. $\Order : \Sents \rightarrow \Enum{n}$ where $\Order$ is a bijective function. In order to predict an ordering we first define a more specific structure set.  
+
+Define a transition index set as 
+
+\[ \IndexSet = \Set{ (i, u, v) : u, v \in \Sents, i \in \Enum{n}, u \neq v } \]
+
+And let the set of bigram orderings be defined as $\Structs \subset \Bin{\IndexSet}$.
+The score of an ordering is given by a linear function  $f:\Bin{\IndexSet} \rightarrow \Reals$, and the decoding problem is to find 
+
+\[\argmax_{y \in \Structs} f(y) = \argmax_{y \in \Structs} \theta^\top y \] 
+
+\noindent where $\theta \in \Reals^{\IndexSet}$ is a parameter vector specific to the document $x$.
+
+% In order to define the ordering constraints on $\Stucts$ considers a directed graph $(\Ver, \Edges)$ where $\Ver = \Enum{|\Sents|}$ and $\Edges = \Ver \times \Ver$. The weights $\theta$ can be interpreted as a edge weights on this directed graph. Define the set $\Structs$ to be all valid {\em tours} of this graph starting from any vertex.
+
+% More specifically, we define $\Structs$ as 
+
+% \[\Structs = \begin{cases} y \in \Bin{\IndexSet}: & \displaystyle \sum_{j = 1}^{|\Sents|} y_{ij} = 1 \ \  \forall i \in \Enum{\Sents}, \\ 
+% & \displaystyle  \sum_{j = 1}^{|\Sents|} y_{ji} = 1 \ \ \forall i \in \Enum{\Sents} \\ 
+% \end{cases} 
+% \]    
+ 
+% 
+In practice, we redefine this problem using a lattice representation $(\Ver, \Edges)$ where $\Ver = \Enum{\Sents} \times \Enum{\Sents}$ and $\Edges$ defined as 
+
+\[ {\Edges} = \Set{ ((i, j), (i + 1, k)): i,j,k \in \Enum{|\Sents|}, j \neq k  } \] 
+ 
+And we define new constraints
+
+
+\[\Structs' = \begin{cases} y : 
+% & \displaystyle \sum_{i = 1}^n \sum_{v\in \Sents} y(i, u,v)  = 1 \ \  \forall u \in \Sents, \\ 
+& \displaystyle \sum_{u, v\in  \Sents } y(1, u, v)  = 1,  \displaystyle\sum_{u, v \in \Sents } y(n, u, v)  = 1,\\
+
+  & \displaystyle \sum_{u \in \Sents} y(i, u, v) = \sum_{w \in \Sents} y(i+ 1, v, w) \\ \ & \forall i \in \{1\ldots (n-1)\}, u, v \in \Sents, \\
+  % & \displaystyle  \sum_{u \in \Sents} y(i, u, v) = 1 \ \ \forall i \in \Enum{n}, v \in \Sents \\
+\end{cases} 
+\]    
+
+And we add the constraint 
+\[\Structs = \begin{cases} y\in\Structs' :  & \displaystyle \sum_{i = 1}^n \sum_{u\in \Sents} y(i, u,v)  = 1 \ \  \forall v \in \Sents, \]
+
+
+
+\todo[inline]{Show this} 
+The decoding problem $\argmax_{y \in \Structs} f(y)$ is equivalent a directed traveling salesman problem over this graph \cite{}. 
+
+
+
+
+% Each document
+
+
+
+
+% decoding section.
+
+\section{Features}
+
+In this section we discuss how to compute the edge weights of the lattice. We will assume that $\theta(i, u, v) = w^\top \phi(x, (i, u, v))$ where $w \in \Reals^{d}$ is a parameter vector and $\phi: ({\cal X} \times \IndexSet) \rightarrow \Reals^{d}$ is a local feature function. 
+
+\paragraph{Entity-Grid Features}
+
+\newcite{bandl} propose a model of document  coherence using an Entity-Grid model.
+
+% Define Entity-grid model
+
+% Define how the features work for it. 
+
+\paragraph{Sentence Topic Features}
+
+
+
+
+\paragraph{Lexical Features}
+
+\paragraph{Syntactic Features}
+
+
+   
+
+
+% Topic features
+
+% Entity-grid discriminative
+
+
+\section{Structured Training}
+
+
+\section{Decoding}
+
+\section{Related Work}
 
 \input{results}
+
 % include your own bib file like this:
 \bibliographystyle{acl}
 \bibliography{acl2014}
 
 \end{document}
 
-%%% Local Variables:
+%%% Local Variables: 
 %%% mode: latex
 %%% TeX-master: t
-%%% End:
+%%% End: 
