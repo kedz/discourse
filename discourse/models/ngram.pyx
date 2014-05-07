@@ -1,8 +1,13 @@
+cimport discourse.lattice as lattice
 import discourse.lattice as lattice
 import textwrap
 import itertools
+from collections import defaultdict
+import nltk
 
-class NGramDiscourseInstance:
+cdef lattice.Transition Transition
+
+cdef class NGramDiscourseInstance:
     """An ngram discourse coherence sequence model instance for
     predicting the correct order of sentences in a document.
 
@@ -28,15 +33,21 @@ class NGramDiscourseInstance:
 
     """
 
-    def __init__(self, doc, features=None, topic_map=None, ngram=3):
+
+    def __init__(self, doc, features=None, topic_map=None,
+                 ngram=3, use_cache=False):
         self.doc = doc
         self.nsents = len(doc.sents)
-        self.active_feat = active_features if features is None else features
+        self.active_feat = features
+#active_features if features is None else features
         self.entity_counts = self._build_entity_counts(doc)
         self._f_cache = {}
         self._topic_map = topic_map
         self.ngram = ngram
-
+        self._use_cache = use_cache
+        self._verb_cache = [None for s in doc.sents]
+        self._syntax_cache = [[None, None, None] for s in doc.sents]
+        self._fw_cache = [None for s in doc.sents]
 
     def _build_entity_counts(self, doc):
         """ Build a dict of occurrence counts of noun tokens in this
@@ -77,7 +88,7 @@ class NGramDiscourseInstance:
         return hypergraph
 
 
-    def feature_map(self, transition):
+    cdef feature_map(self, lattice.Transition transition):
         """ Build the feature map for this transition (i.e. graph
         edge). If we have already constructed this map, return the
         map in _f_cache.
@@ -96,33 +107,35 @@ class NGramDiscourseInstance:
             graph edge that corresponds to transition.
         """
 
+        
+
         # Check the cache if we have already created this transition's
         # feature map, otherwise create a new one.
-        #if transition in self._f_cache:
-        #    fmap = self._f_cache[transition]
-        #    return fmap
 
-        #else:
+        if transition in self._f_cache and self._use_cache is True:
+            return self._f_cache[transition]
+
+        else:
 
             # Create an empty feature map for this transition.
-        fmap = {}
+            fmap = {}
 
-            ### Call each feature function if active. ###
-        if self.active_feat.get('role_match', False):
-            self._f_role_match(fmap, transition)
+                ### Call each feature function if active. ###
+            if self.active_feat.get('role_match', False):
+                self._f_role_match(fmap, transition)
 #
 #            if self.active_feat.get('discourse_new', False):
 #                self._f_discourse_new(fmap, transition)
 #
 #            if self.active_feat.get('discourse_connectives', False):
 #                self._f_discourse_connectives(fmap, transition)
-        if self.active_feat.get('first_word', False):
-            self._f_first_word(fmap, transition)
+            if self.active_feat.get('first_word', False):
+                self._f_first_word(fmap, transition)
 #
-#            if self.active_feat.get('syntax_lev1', False):
-#                self._f_syntax_lev(fmap, transition, 1)
-#            if self.active_feat.get('syntax_lev2', False):
-#                self._f_syntax_lev(fmap, transition, 2)
+            if self.active_feat.get('syntax_lev1', False):
+                self._f_syntax_lev(fmap, transition, 1)
+            if self.active_feat.get('syntax_lev2', False):
+                self._f_syntax_lev(fmap, transition, 2)
 #
 #            if self.active_feat.get('personal_pronoun_res', False):
 #                self._f_personal_pronoun_res(fmap, transition)
@@ -130,11 +143,9 @@ class NGramDiscourseInstance:
 #            if self.active_feat.get('ne_types', False):
 #                self._f_ne_types(fmap, transition)
 #
-#            if self.active_feat.get('verbs', False):
-#                self._f_verbs(fmap, transition)
-#            
-#            if self.active_feat.get('topics', False):
-#                self._f_topics(fmap, transition)
+            if self.active_feat.get('verbs', False):
+                self._f_verbs(fmap, transition)
+            
 #
 #            
 #            if self.active_feat.get('relative_position', False):
@@ -144,17 +155,27 @@ class NGramDiscourseInstance:
 #            if self.active_feat.get('sentiment', False):
 #                self._f_sentiment(fmap, transition)
 #
-#            if self.active_feat.get('topics_rewrite', False):
-#                self._f_topics_rewrite(fmap, transition)
-            
-        if self.active_feat.get(u'debug', False):
-            self._f_debug(fmap, transition)
+            if self.active_feat.get('topics_rewrite_20', False):
+                self._f_topics_rewrite(fmap, transition, '20')
+            if self.active_feat.get('topics_rewrite_40', False):
+                self._f_topics_rewrite(fmap, transition, '40')
+            if self.active_feat.get('topics_rewrite_60', False):
+                self._f_topics_rewrite(fmap, transition, '60')
+            if self.active_feat.get('topics_rewrite_80', False):
+                self._f_topics_rewrite(fmap, transition, '80')
+            if self.active_feat.get('topics_rewrite_100', False):
+                self._f_topics_rewrite(fmap, transition, '100')
+                
+            if self.active_feat.get(u'debug', False):
+                self._f_debug(fmap, transition)
 
-        if self.active_feat.get('relative_position_qtr', False):
-            self._f_relative_position_qtr(fmap, transition)
-
-            #self._f_cache[transition] = fmap
-        return fmap
+            if self.active_feat.get('topics', False):
+                self._f_topics(fmap, transition)
+            if self.active_feat.get('relative_position_qtr', False):
+                self._f_relative_position_qtr(fmap, transition)
+            if self._use_cache is True:
+                self._f_cache[transition] = fmap
+            return fmap
 
     def _f_first_word(self, fmap, transition):
         """ Marks the sequence first words of the sentences selected
@@ -173,21 +194,8 @@ class NGramDiscourseInstance:
         """
 
         nsents = len(self.doc.sents)
-        def extract_fws(label):
-            idx = lattice.s2i(label, end=nsents)
-            if idx == -1:
-                return ['START']
-            elif idx == nsents:
-                return ['END']
-            else:
-                t = self.doc.sents[idx].tokens[0]
-                if t.ne == 'O':
-                    return [t.lem.lower(), u'__']
-                else:
-                    return [t.lem.lower(), t.ne, u'__']
-
-        feature_combs = [extract_fws(label) 
-                         for label in transition.labels[::-1]]
+        feature_combs = [self.extract_fws(idx) 
+                         for idx in transition.idxs[::-1]]
         null_p = tuple([u'__']) * len(feature_combs)
 
         for p in itertools.product(*feature_combs):
@@ -199,22 +207,26 @@ class NGramDiscourseInstance:
             fstr = u'First Word: {}'.format(u' --> '.join(p))
             fmap[fstr] = 1
 
-    def _f_verbs(self, fmap, transition):
+    cdef extract_fws(self, int idx):
+        if idx == -1:
+            return ['START']
+        elif idx == self.nsents:
+            return ['END']
+        else:
+            if self._fw_cache[idx] is None:
+                t = self.doc.sents[idx].tokens[0]
+                if t.ne == 'O':
+                    self._fw_cache[idx] = [t.lem.lower(), u'__']
+                else:
+                    self._fw_cache[idx] = [t.lem.lower(), t.ne, u'__']
+            return self._fw_cache[idx] 
+
+    cdef _f_verbs(self, dict fmap, lattice.Transition transition):
         
         nsents = len(self.doc)
-        def extract_verbs(label):
-            idx = lattice.s2i(label, end=nsents)
-            if idx == -1:
-                return ['START']
-            elif idx == nsents:
-                return ['END']
-            else:
-                s = self.doc.sents[idx]
-                verbs = [t.lem.lower() for t in s.tokens if 'VB' in t.pos]
-                return set(verbs).union(set(['__']))
-        
-        feature_combs = [extract_verbs(label) 
-                         for label in transition.labels[::-1]]
+                
+        feature_combs = [self.extract_verbs(idx) 
+                         for idx in transition.idxs[::-1]]
         null_p = tuple([u'__']) * len(feature_combs)
 
         for p in itertools.product(*feature_combs):
@@ -225,8 +237,23 @@ class NGramDiscourseInstance:
             # Mark the feature
             fstr = u'Verbs: {}'.format(u' --> '.join(p))
             fmap[fstr] = 1
-    
-    def _f_relative_position_qtr(self, fmap, transition):
+
+    cdef extract_verbs(self, int idx):
+ 
+        if idx == -1:
+            return ['START']
+        elif idx == self.nsents:
+            return ['END']
+        else:
+            if self._verb_cache[idx] is None:
+                s = self.doc.sents[idx]
+                verbs = [t.lem.lower() for t in s.tokens if 'VB' in t.pos]
+                
+                self._verb_cache[idx] = set(verbs).union(set(['__']))
+            return self._verb_cache[idx]
+   
+    cdef _f_relative_position_qtr(self, dict fmap,
+                                  lattice.Transition transition):
         nsents = len(self.doc)
         per = transition.position / float(nsents)
         if per <= .25:
@@ -246,39 +273,39 @@ class NGramDiscourseInstance:
 
     def _f_role_match(self, fmap, transition):
 
-        ent_roles = []
-        ents = set()
+        sent_ent_roles = []
         for label in transition.labels[::-1]:
             idx = lattice.s2i(label, end=self.nsents)
             if idx == -1:         
-                #ent_roles.append([('START', 'START')])
-                ents.add('START')
+                sent_ent_roles.append(defaultdict(lambda: ['START']))
             elif idx == self.nsents:
-                #ent_roles.append([('END', 'END')])
-                ents.add('END')
+                sent_ent_roles.append(defaultdict(lambda: ['END']))
             else:
                 s = self.doc.sents[idx]
-                sent_ent_roles = {ent_role[0]: ent_role[1] 
-                                  for ent_role in self._entity_roles(s)
-                                  if self.entity_counts[ent_role[0]] > 1}
+                sermap = defaultdict(lambda: ['X', '__'])
+                for ent_role in self._entity_roles(s):
+                    if self.entity_counts[ent_role[0]] > 1:
+                        sermap[ent_role[0]] = [ent_role[1], '__'] 
+                sent_ent_roles.append(sermap)
                 
+        null_p = tuple([u'__']) * self.ngram
         for ent, cnt in self.entity_counts.iteritems():
-            if cnt > 1:
-                print 'Checking ent:', ent, cnt
-                #for     
-                     
+                       
+            feature_combs = [sermap[ent] for sermap in sent_ent_roles]
 
-#        for p in itertools.product(*ent_roles):
-#            print p
-            
-            #p = tuple(p) 
-            #if p == null_p:
-            #    continue
-            
-            # Mark the feature
-            #fstr = u'Verbs: {}'.format(u' --> '.join(p))
-            #fmap[fstr] = 1
-               
+            for p in itertools.product(*feature_combs):
+                p = tuple(p) 
+                if p == null_p:
+                    continue
+                
+                # Mark the feature
+                fstr = u'Role Match: {}'.format(u' --> '.join(p))
+
+                if cnt > 1:
+                    fstr = u'Salient {}'.format(fstr)
+                score = fmap.get(fstr, 0)                
+                fmap[fstr] = score + 1
+
 
     def _entity_roles(self, s):
         """ Returns a set of entity, role tuples for a sentence s.
@@ -347,8 +374,115 @@ class NGramDiscourseInstance:
 #                    s_ents.add((rel.dep, 'other'))
 #        return s_ents
 
-               
 
+    cdef _f_syntax_lev(self, dict fmap, lattice.Transition transition, 
+                       int depth):
+        """ Marks the non-terminal sequence transition in the
+        feature map. E.g. S , NP VP . ---> NP VP .
+
+        Parameters
+        ----------
+        fmap : dict (string -> int)
+            A dict mapping feature names to feature values
+            for this transition. This function mutates this dict.
+
+        transition : Transition
+            the graph transition, for which this function
+            extracts features.
+
+        depth : int
+            The depth of the sequence to extract from the parse
+            tree.
+        """
+        productions = []
+        for idx in transition.idxs[::-1]:
+            if idx == -1:         
+                productions.append(['START'])
+            elif idx == self.nsents:
+                productions.append(['END'])
+            else:
+                if self._syntax_cache[idx][depth] is None:
+                    tree = self.doc.sents[idx].parse
+                    prod = self.syn_sequence(tree, depth)
+                    self._syntax_cache[idx][depth] = [prod, '__']
+                    
+                productions.append(self._syntax_cache[idx][depth])    
+
+        null_p = tuple([u'__']) * self.ngram
+
+        for p in itertools.product(*productions):
+            p = tuple(p) 
+            if p == null_p:
+                continue
+            
+            # Mark the feature
+            fstr = u'Syntax ({}): {}'.format(depth, u' --> '.join(p))
+            fmap[fstr] = 1
+
+
+
+    def syn_sequence(self, parse_tree, depth):
+        """
+        Given a parse tree, return the sequence of non-terminals at a
+        given depth. See Louis & Nenkova, 2012 for details.
+        """
+        seqs = [[]]
+        Q = []
+        d = 0
+        curr_d = d
+        Q.append((parse_tree[0], d))
+        while len(Q) > 0 and curr_d <= depth:
+            nt, nt_d = Q.pop(0)
+            if nt_d != curr_d:
+                curr_d = nt_d
+                seqs.append([])
+            if isinstance(nt, nltk.Tree):
+                seqs[nt_d].append(nt.node)
+                for c in nt:
+                    Q.append((c, nt_d+1))
+
+        if depth < len(seqs):
+            return u' '.join(seqs[depth])
+        else:
+            return u''      
+
+    cdef _f_topics(self, dict fmap, lattice.Transition transition):
+
+        # Get topic granularities        
+        grans = self._topic_map[0].keys()
+        null_p = tuple([u'__']) * self.ngram
+        
+        for gran in grans:
+            topics = []    
+            for idx in transition.idxs[::-1]:
+                if idx == -1:
+                    topics.append(['START'])
+                elif idx == self.nsents:
+                    topics.append(['END'])
+                else:
+                    topics.append([self._topic_map[idx][gran], '__'])
+                       
+            for p in itertools.product(*topics):
+                p = tuple(p) 
+                if p == null_p:
+                    continue
+                
+                # Mark the feature
+                fstr = u'Topics ({}): {}'.format(gran, u' --> '.join(p))
+                fmap[fstr] = 1
+
+    cdef _f_topics_rewrite(self, dict fmap, lattice.Transition transition,
+                           object granularity):
+
+        idx = transition.idxs[0]
+        if idx == -1 or idx == self.nsents:
+            return
+        topic = self._topic_map[idx][granularity]
+
+        for feat, val in fmap.items():
+            fstr = u'(TPC (Gran {}) {}) {}'.format(granularity, topic, feat)
+            fmap[fstr] = val
+ 
     def _f_debug(self, fmap, transition):
         s2i = lattice.s2i
         nsents = len(self.doc.sents)

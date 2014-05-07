@@ -2412,7 +2412,7 @@ class TestNGramModel:
     def verb_feature_bigram_test(self):
         inst = NGramDiscourseInstance(self.doc, {'verbs': True}, None, 2)
         fmap1 = {}
-        t1 = Transition(('END', 's-1'), 5)
+        t1 = Transition(('END', 's-1'), 4)
         inst._f_verbs(fmap1, t1)
         
         valid_feats1 = set(['Verbs: hit --> END',
@@ -2460,16 +2460,190 @@ class TestNGramModel:
          
         assert correct_set3 == ent_roles3
 
-        print 
-        for i, s in enumerate(self.doc):
-            print i, inst._entity_roles(self.doc.sents[i])
 
-    def role_match_bigram_feature_test(self): 
-        inst = NGramDiscourseInstance(self.doc, {'role_match': True}, None, 2)
+    def role_match_trigram_feature_test(self): 
+        inst = NGramDiscourseInstance(self.doc, {'role_match': True}, None, 3)
+        
+        fmap = {}
+        t1 = Transition(('s-3', 's-2', 'START'), 3)
+        inst._f_role_match(fmap, t1)
 
-        fmap1 = {}
-        t1 = Transition(('s-3', 's-2'), 3)
-        inst._f_role_match(fmap1, t1)
-        for s in self.doc:
-            print s        
+        fstr1 = 'Role Match: START --> X --> X'
+        assert fmap[fstr1] == 17
+        fstr2 = 'Role Match: START --> X --> __'
+        assert fmap[fstr2] == 17
+        fstr3 = 'Role Match: START --> __ --> X'
+        assert fmap[fstr3] == 17
+        fstr4 = 'Role Match: START --> __ --> __'
+        assert fmap[fstr4] == 17
+        fstr5 = 'Salient Role Match: START --> X --> OBJECT'
+        assert fmap[fstr5] == 1
+        fstr6 = 'Salient Role Match: START --> __ --> OBJECT'
+        assert fmap[fstr6] == 3
+        fstr7 = 'Salient Role Match: START --> CLAUSE --> OBJECT'
+        assert fmap[fstr7] == 2
+        fstr8 = 'Salient Role Match: START --> CLAUSE --> __'
+        assert fmap[fstr8] == 2
+        fstr9 = 'Salient Role Match: START --> __ --> __'
+        assert fmap[fstr9] == 7
+        fstr10 = 'Salient Role Match: START --> X --> __'
+        assert fmap[fstr10] == 5
+        fstr11 = 'Salient Role Match: START --> X --> X'
+        assert fmap[fstr11] == 4
+        fstr12 = 'Salient Role Match: START --> __ --> X'
+        assert fmap[fstr12] == 4
 
+        features = set([fstr1, fstr2, fstr3, fstr4, fstr5,
+                        fstr6, fstr7, fstr8, fstr9, fstr10,                    
+                        fstr11, fstr12])
+        for f in fmap.keys():
+            assert f in features
+
+
+
+#        fmap2 = {}
+#        t2 = Transition(('END', 's-3', 's-2'), 3)
+#        inst._f_role_match(fmap2, t2)
+#
+#        fstr1 = 'Role Match: X --> X --> END'
+#        assert fmap2[fstr1] == 4
+#        fstr2 = 'Role Match: X --> __ --> END'
+#        assert fmap2[fstr2] == 5
+#        fstr3 = 'Role Match: __ --> X --> END'
+#        assert fmap2[fstr3] == 4
+#        fstr4 = 'Role Match: __ --> __ --> END'
+#        assert fmap2[fstr4] == 7
+#        fstr5 = 'Role Match: X --> OBJECT --> END'
+#        assert fmap2[fstr5] == 1
+#        fstr6 = 'Role Match: __ --> OBJECT --> END'
+#        assert fmap2[fstr6] == 3
+#        fstr7 = 'Role Match: CLAUSE --> OBJECT --> END'
+#        assert fmap2[fstr7] == 2
+#        fstr8 = 'Role Match: CLAUSE --> __ --> END'
+#        assert fmap2[fstr8] == 2
+#
+#        fmap3 = {}
+#        t3 = Transition(('s-3', 's-2', 's-1'), 3)
+#        inst._f_role_match(fmap3, t3)
+#
+#        fstr1 = 'Role Match: X --> X --> X'
+#        assert fmap3[fstr1] == 2
+#        fstr2 = 'Role Match: X --> X --> __'
+#        assert fmap3[fstr2] == 2
+#        fstr3 = 'Role Match: X --> __ --> X'
+#        assert fmap3[fstr3] == 2
+#        fstr4 = 'Role Match: X --> __ --> __'
+#        assert fmap3[fstr4] == 4
+#        fstr5 = 'Role Match: X --> CLAUSE --> __'
+#        assert fmap3[fstr5] == 2 
+#        fstr6 = 'Role Match: X --> __ --> OBJECT'
+#        assert fmap3[fstr6] == 2 
+#        fstr7 = 'Role Match: X --> CLAUSE --> OBJECT'
+#        assert fmap3[fstr7] == 2 
+#        fstr8 = 'Role Match: __ --> X --> X'
+#        assert fmap3[fstr8] == 4 
+#        fstr9 = 'Role Match: __ --> X --> __'
+#        assert fmap3[fstr9] == 5 
+#        fstr10 = 'Role Match: __ --> __ --> X'
+#        assert fmap3[fstr10] == 4 
+#        fstr11 = 'Role Match: __ --> __ --> __'
+#        assert fmap3.get(fstr11, 0) == 0
+#        fstr12 = 'Role Match: __ --> CLAUSE --> __'
+#        assert fmap3[fstr12] == 2 
+#        fstr13 = 'Role Match: __ --> __ --> OBJECT'
+#        assert fmap3[fstr13] == 3 
+#        fstr14 = 'Role Match: __ --> CLAUSE --> OBJECT'
+#        assert fmap3[fstr14] == 2 
+#        fstr15 = 'Role Match: CLAUSE --> X --> X'
+#        assert fmap3[fstr15] == 1 
+#        fstr16 = 'Role Match: CLAUSE --> X --> __'
+#        assert fmap3[fstr16] == 1 
+#        fstr17 = 'Role Match: CLAUSE --> __ --> X'
+#        assert fmap3[fstr17] == 1 
+#        fstr18 = 'Role Match: CLAUSE --> __ --> __'
+#        assert fmap3[fstr18] == 1 
+#        fstr19 = 'Role Match: SUBJECT --> X --> X'
+#        assert fmap3[fstr19] == 1 
+#        fstr20 = 'Role Match: SUBJECT --> X --> __'
+#        assert fmap3[fstr20] == 1 
+#        fstr21 = 'Role Match: SUBJECT --> __ --> X'
+#        assert fmap3[fstr21] == 1 
+#        fstr22 = 'Role Match: SUBJECT --> __ --> __'
+#        assert fmap3[fstr22] == 1 
+#
+#        fstr23 = 'Role Match: OBJECT --> __ --> __'
+#        assert fmap3[fstr23] == 1 
+#        fstr24 = 'Role Match: OBJECT --> X --> __'
+#        assert fmap3[fstr24] == 1 
+#        fstr25 = 'Role Match: OBJECT --> __ --> OBJECT'
+#        assert fmap3[fstr25] == 1 
+#        fstr26 = 'Role Match: OBJECT --> X --> OBJECT'
+#        assert fmap3[fstr26] == 1 
+#        fstr27 = 'Role Match: __ --> __ --> OBJECT'
+#        assert fmap3[fstr27] == 3 
+#        fstr28 = 'Role Match: __ --> X --> OBJECT'
+#        assert fmap3[fstr28] == 1 
+#        
+#        features = set([fstr1, fstr2, fstr3, fstr4, fstr5,
+#                        fstr6, fstr7, fstr8, fstr9, fstr10,                    
+#                        fstr11, fstr12, fstr13, fstr14, fstr15,
+#                        fstr16, fstr17, fstr18, fstr19, fstr20, 
+#                        fstr21, fstr22, fstr23, fstr24, fstr25,
+#                        fstr26, fstr27, fstr28])        
+#        for f in fmap3.keys():
+#            assert f in features
+
+    def test_syntax_sequence(self):
+
+        inst = NGramDiscourseInstance(self.doc, {}, None, 3)
+        
+        sstr1 = str(inst.syn_sequence(self.doc.sents[1].parse, 0))
+        assert sstr1 == 'S'
+        sstr2 = str(inst.syn_sequence(self.doc.sents[1].parse, 1))
+        assert sstr2 == 'NP PRN NP VP .'
+        sstr3 = str(inst.syn_sequence(self.doc.sents[1].parse, 2))
+        assert sstr3 == 'NNP -LRB- NP -RRB- DT JJ NN VBD NP PP PP NP-TMP , PP'
+
+    def syntax_feature_test(self): 
+        inst = NGramDiscourseInstance(self.doc, {'syntax_lev1': True,
+                                                 'syntax_lev2':True}, None, 3)
+        
+        t1 = Transition(('s-3', 's-2', 'START'), 3)
+        fmap = inst.feature_map(t1)
+
+
+        fstr1 = 'Syntax (1): START --> __ --> __'
+        assert fmap.get(fstr1, 0) == 1
+        fstr2 = 'Syntax (2): START --> NP VP VBD NP NNP --> PRP VBD SBAR'
+        assert fmap.get(fstr2, 0) == 1
+        fstr3 = 'Syntax (2): START --> NP VP VBD NP NNP --> __'
+        assert fmap.get(fstr3, 0) == 1
+        fstr4 = 'Syntax (1): START --> S , VP NP . --> NP VP .'
+        assert fmap.get(fstr4, 0) == 1
+        fstr5 = 'Syntax (1): START --> S , VP NP . --> __'
+        assert fmap.get(fstr5, 0) == 1
+        fstr6 = 'Syntax (2): START --> __ --> PRP VBD SBAR'
+        assert fmap.get(fstr6, 0) == 1
+        fstr7 = 'Syntax (2): START --> __ --> __'
+        assert fmap.get(fstr7, 0) == 1
+        fstr8 = 'Syntax (1): START --> __ --> NP VP .'
+        assert fmap.get(fstr8, 0) == 1
+
+
+    def cache_test(self): 
+        inst1 = NGramDiscourseInstance(self.doc, {'syntax_lev1': True}, None,
+                                       ngram=3, use_cache=True)
+        
+        t1 = Transition(('s-3', 's-2', 'START'), 3)
+        fmap1 = inst1.feature_map(t1)
+        assert t1 in inst1._f_cache
+        assert inst1._f_cache[t1] is fmap1        
+
+        inst2 = NGramDiscourseInstance(self.doc, {'syntax_lev1': True}, None,
+                                       ngram=3, use_cache=False)
+        
+        t2 = Transition(('s-3', 's-2', 'START'), 3)
+        fmap2 = inst2.feature_map(t2)
+        assert t2 not in inst2._f_cache           
+        assert inst2.feature_map(t2) is not fmap2        
+         

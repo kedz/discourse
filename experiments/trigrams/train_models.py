@@ -5,7 +5,7 @@ from discourse.models.ngram import NGramDiscourseInstance
 import discourse.learners as learners
 import discourse.topics as topics
 import pickle
-
+from datetime import datetime
 
 ### NON TOPIC FEATURES ###
 
@@ -76,79 +76,364 @@ fw_vbz_s_posq_feats = {'first_word': True,
 
 ftr_settings = [
                 (fw_feats, 'fw_feats.p'),
-#                (vbz_feats, 0, 'vbz_feats.p'),
-#                (vbz_posq_feats, 0, 'vbz_posq_feats.p'),
-#                (fw_posq_feats, 0, 'fw_posq_feats.p'),
-#                (rm_feats, 0, 'rm_feats.p'),
-#                (rm_posq_feats, 0, 'rm_posq_feats.p'),
-#                (sx1_feats, 0, 'sx1_feats.p'),
-#                (sx1_posq_feats, 0, 'sx1_posq_feats.p'),
-#                (sx2_feats, 0, 'sx2_feats.p'),
-#                (sx2_posq_feats, 0, 'sx2_posq_feats.p'),
-#                (sx12_feats, 0, 'sx12_feats.p'),
-#                (sx12_posq_feats, 0, 'sx12_posq_feats.p'),
+                (rm_feats, 'rm_feats.p'),
+                (rm_posq_feats, 'rm_posq_feats.p'),
+                (vbz_feats, 'vbz_feats.p'),
+                (vbz_posq_feats, 'vbz_posq_feats.p'),
+                (fw_posq_feats, 'fw_posq_feats.p'),
+                (sx1_feats, 'sx1_feats.p'),
+                (sx1_posq_feats, 'sx1_posq_feats.p'),
+                (sx2_feats, 'sx2_feats.p'),
+                (sx2_posq_feats, 'sx2_posq_feats.p'),
+                (sx12_feats, 'sx12_feats.p'),
+                (sx12_posq_feats, 'sx12_posq_feats.p'),
 #                (s_feats, 0, 's_feats.p'),
 #                (s_posq_feats, 0, 's_posq_feats.p'),
-#                (fw_vbz_feats, 0, 'fw_vbz_feats.p'),
-#                (fw_vbz_posq_feats, 0, 'fw_vbz_posq_feats.p'),
-#                (fw_rm_feats, 0, 'fw_rm_feats.p'),
-#                (fw_rm_posq_feats, 0, 'fw_rm_posq_feats.p'),
-#                (fw_vbz_sx1_feats, 0, 'fw_vbz_sx1_feats.p'),
-#                (fw_vbz_sx1_posq_feats, 0, 'fw_vbz_sx1_posq_feats.p'),
+                (fw_vbz_feats, 'fw_vbz_feats.p'),
+                (fw_vbz_posq_feats, 'fw_vbz_posq_feats.p'),
+                (fw_rm_feats, 'fw_rm_feats.p'),
+                (fw_rm_posq_feats, 'fw_rm_posq_feats.p'),
+                (fw_vbz_sx1_feats, 'fw_vbz_sx1_feats.p'),
+                (fw_vbz_sx1_posq_feats, 'fw_vbz_sx1_posq_feats.p'),
 #                (fw_vbz_s_feats, 0, 'fw_vbz_s_feats.p'),
-#                (fw_vbz_s_posq_feats, 0, 'fw_vbz_s_posq_feats.p')
+#                (fw_vbz_s_posq_feats, 'fw_vbz_s_posq_feats.p')
                 ]
 
 
 ### TOPIC FEATURES ###
 
-tpc_f = {'topics': True,
-         'topics_rewrite': True}
+tpc_f = {'topics': True}
+trw20 = {'topics_rewrite_20': True}
+trw40 = {'topics_rewrite_40': True}
+trw60 = {'topics_rewrite_60': True}
+trw80 = {'topics_rewrite_80': True}
+trw100 = {'topics_rewrite_100': True}
 
-tpc_settings = [(dict(vbz_feats.items()+tpc_f.items()), 0,
+
+#tpc_settings = [({'topics': True}, 'tpc_feats.p')]
+
+tpc_settings = [(tpc_f, 'tpc_feats.p'),
+                (dict(vbz_feats.items()+tpc_f.items()),
                  'vbz_tpc_feats.p'),
-                (dict(vbz_posq_feats.items() + tpc_f.items()), 0,
+                (dict(vbz_posq_feats.items() + tpc_f.items()),
                  'vbz_posq_tpc_feats.p'),
-                (dict(fw_feats.items() + tpc_f.items()), 0,
-                 'fw_tpc_tpc_feats.p'),
-                (dict(fw_posq_feats.items() + tpc_f.items()), 0,
+                (dict(fw_feats.items() + tpc_f.items()),
+                 'fw_tpc_feats.p'),
+                (dict(fw_posq_feats.items() + tpc_f.items()), 
                  'fw_posq_tpc_feats.p'),
-                (dict(rm_feats.items() + tpc_f.items()), 0,
+                (dict(rm_feats.items() + tpc_f.items()), 
                  'rm_tpc_feats.p'),
-                (dict(rm_posq_feats.items() + tpc_f.items()), 0,
+                (dict(rm_posq_feats.items() + tpc_f.items()),
                  'rm_posq_tpc_feats.p'),
-                (dict(sx1_feats.items() + tpc_f.items()), 0,
+                (dict(sx1_feats.items() + tpc_f.items()),
                  'sx1_tpc_feats.p'),
-                (dict(sx1_posq_feats.items() + tpc_f.items()), 0,
+                (dict(sx1_posq_feats.items() + tpc_f.items()),
                  'sx1_posq_tpc_feats.p'),
-                (dict(sx2_feats.items() + tpc_f.items()), 0,
+                (dict(sx2_feats.items() + tpc_f.items()),
                  'sx2_tpc_feats.p'),
-                (dict(sx2_posq_feats.items() + tpc_f.items()), 0,
+                (dict(sx2_posq_feats.items() + tpc_f.items()),
                  'sx2_posq_tpc_feats.p'),
-                (dict(sx12_feats.items() + tpc_f.items()), 0,
+                (dict(sx12_feats.items() + tpc_f.items()),
                  'sx12_tpc_feats.p'),
-                (dict(sx12_posq_feats.items() + tpc_f.items()), 0,
+                (dict(sx12_posq_feats.items() + tpc_f.items()),
                  'sx12_posq_tpc_feats.p'),
-                (dict(s_feats.items() + tpc_f.items()), 0,
-                 's_tpc_feats.p'),
-                (dict(s_posq_feats.items() + tpc_f.items()), 0,
-                 's_posq_tpc_feats.p'),
-                (dict(fw_vbz_feats.items() + tpc_f.items()), 0,
+                #(dict(s_feats.items() + tpc_f.items()),
+                # 's_tpc_feats.p'),
+                #(dict(s_posq_feats.items() + tpc_f.items()),
+                # 's_posq_tpc_feats.p'),
+                (dict(fw_vbz_feats.items() + tpc_f.items()),
                  'fw_vbz_tpc_feats.p'),
-                (dict(fw_vbz_posq_feats.items() + tpc_f.items()), 0,
+                (dict(fw_vbz_posq_feats.items() + tpc_f.items()),
                  'fw_vbz_posq_tpc_feats.p'),
-                (dict(fw_rm_feats.items() + tpc_f.items()), 0,
+                (dict(fw_rm_feats.items() + tpc_f.items()),
                  'fw_rm_tpc_feats.p'),
-                (dict(fw_rm_posq_feats.items() + tpc_f.items()), 0,
+                (dict(fw_rm_posq_feats.items() + tpc_f.items()),
                  'fw_rm_posq_tpc_feats.p'),
-                (dict(fw_vbz_sx1_feats.items() + tpc_f.items()), 0,
+                (dict(fw_vbz_sx1_feats.items() + tpc_f.items()),
                  'fw_vbz_sx1_tpc_feats.p'),
-                (dict(fw_vbz_sx1_posq_feats.items() + tpc_f.items()), 0,
+                (dict(fw_vbz_sx1_posq_feats.items() + tpc_f.items()),
                  'fw_vbz_sx1_posq_tpc_feats.p'),
-                (dict(fw_vbz_s_feats.items() + tpc_f.items()), 0,
-                 'fw_vbz_s_tpc_feats.p'),
-                (dict(fw_vbz_s_posq_feats.items() + tpc_f.items()), 0,
-                 'fw_vbz_s_posq_tpc_feats.p')
+                #(dict(fw_vbz_s_feats.items() + tpc_f.items()),
+                # 'fw_vbz_s_tpc_feats.p'),
+                #(dict(fw_vbz_s_posq_feats.items() + tpc_f.items()),
+                # 'fw_vbz_s_posq_tpc_feats.p'),
+
+
+                (dict(vbz_feats.items() + tpc_f.items() + trw20.items()),
+                 'vbz_tpc_trw20_feats.p'),
+                (dict(vbz_posq_feats.items() + tpc_f.items() + \
+                      trw20.items()),
+                 'vbz_posq_tpc_trw20_feats.p'),
+                (dict(fw_feats.items() + tpc_f.items() + \
+                      trw20.items()),
+                 'fw_tpc_trw20_feats.p'),
+                (dict(fw_posq_feats.items() + tpc_f.items() + \
+                      trw20.items()), 
+                 'fw_posq_tpc_trw20_feats.p'),
+                (dict(rm_feats.items() + tpc_f.items() + trw20.items()), 
+                 'rm_tpc_trw20_feats.p'),
+                (dict(rm_posq_feats.items() + tpc_f.items() + trw20.items()),
+                 'rm_posq_tpc_trw20_feats.p'),
+                (dict(sx1_feats.items() + tpc_f.items() + trw20.items()),
+                 'sx1_tpc_trw20_feats.p'),
+                (dict(sx1_posq_feats.items() + tpc_f.items() + trw20.items()),
+                 'sx1_posq_tpc_trw20_feats.p'),
+                (dict(sx2_feats.items() + tpc_f.items() + trw20.items()),
+                 'sx2_tpc_trw20_feats.p'),
+                (dict(sx2_posq_feats.items() + tpc_f.items() + trw20.items()),
+                 'sx2_posq_tpc_trw20_feats.p'),
+                (dict(sx12_feats.items() + tpc_f.items() + trw20.items()),
+                 'sx12_tpc_trw20_feats.p'),
+                (dict(sx12_posq_feats.items() + tpc_f.items() + \
+                      trw20.items()),
+                 'sx12_posq_tpc_trw20_feats.p'),
+                #(dict(s_feats.items() + tpc_f.items() + trw20.items()),
+                # 's_tpc_trw20_feats.p'),
+                #(dict(s_posq_feats.items() + tpc_f.items() + trw20.items()),
+                # 's_posq_tpc_trw20_feats.p'),
+                (dict(fw_vbz_feats.items() + tpc_f.items() + trw20.items()),
+                 'fw_vbz_tpc_trw20_feats.p'),
+                (dict(fw_vbz_posq_feats.items() + tpc_f.items() + \
+                      trw20.items()),
+                 'fw_vbz_posq_tpc_trw20_feats.p'),
+                (dict(fw_rm_feats.items() + tpc_f.items() + trw20.items()),
+                 'fw_rm_tpc_trw20_feats.p'),
+                (dict(fw_rm_posq_feats.items() + tpc_f.items() + \
+                      trw20.items()),
+                 'fw_rm_posq_tpc_trw20_feats.p'),
+                (dict(fw_vbz_sx1_feats.items() + tpc_f.items() + \
+                      trw20.items()),
+                 'fw_vbz_sx1_tpc_trw20_feats.p'),
+                (dict(fw_vbz_sx1_posq_feats.items() + tpc_f.items() + \
+                      trw20.items()),
+                 'fw_vbz_sx1_posq_tpc_trw20_feats.p'),
+                #(dict(fw_vbz_s_feats.items() + tpc_f.items() + \
+                #      trw20.items()),
+                # 'fw_vbz_s_tpc_trw20_feats.p'),
+                #(dict(fw_vbz_s_posq_feats.items() + tpc_f.items() + \
+                #      trw20.items()),
+                # 'fw_vbz_s_posq_tpc_trw20_feats.p'),
+
+#
+#                (dict(vbz_feats.items() + tpc_f.items() + trw40.items()),
+#                 'vbz_tpc_trw40_feats.p'),
+#                (dict(vbz_posq_feats.items() + tpc_f.items() + \
+#                      trw40.items()),
+#                 'vbz_posq_tpc_trw40_feats.p'),
+#                (dict(fw_feats.items() + tpc_f.items() + \
+#                      trw40.items()),
+#                 'fw_tpc_tpc_trw40_feats.p'),
+#                (dict(fw_posq_feats.items() + tpc_f.items() + \
+#                      trw40.items()), 
+#                 'fw_posq_tpc_trw40_feats.p'),
+#                (dict(rm_feats.items() + tpc_f.items() + trw40.items()), 
+#                 'rm_tpc_trw40_feats.p'),
+#                (dict(rm_posq_feats.items() + tpc_f.items() + trw40.items()),
+#                 'rm_posq_tpc_trw40_feats.p'),
+#                (dict(sx1_feats.items() + tpc_f.items() + trw40.items()),
+#                 'sx1_tpc_trw40_feats.p'),
+#                (dict(sx1_posq_feats.items() + tpc_f.items() + trw40.items()),
+#                 'sx1_posq_tpc_trw40_feats.p'),
+#                (dict(sx2_feats.items() + tpc_f.items() + trw40.items()),
+#                 'sx2_tpc_trw40_feats.p'),
+#                (dict(sx2_posq_feats.items() + tpc_f.items() + trw40.items()),
+#                 'sx2_posq_tpc_trw40_feats.p'),
+#                (dict(sx12_feats.items() + tpc_f.items() + trw40.items()),
+#                 'sx12_tpc_trw40_feats.p'),
+#                (dict(sx12_posq_feats.items() + tpc_f.items() + \
+#                      trw40.items()),
+#                 'sx12_posq_tpc_trw40_feats.p'),
+#                #(dict(s_feats.items() + tpc_f.items() + trw40.items()),
+#                # 's_tpc_trw40_feats.p'),
+#                #(dict(s_posq_feats.items() + tpc_f.items() + trw40.items()),
+#                # 's_posq_tpc_trw40_feats.p'),
+#                (dict(fw_vbz_feats.items() + tpc_f.items() + trw40.items()),
+#                 'fw_vbz_tpc_trw40_feats.p'),
+#                (dict(fw_vbz_posq_feats.items() + tpc_f.items() + \
+#                      trw40.items()),
+#                 'fw_vbz_posq_tpc_trw40_feats.p'),
+#                (dict(fw_rm_feats.items() + tpc_f.items() + trw40.items()),
+#                 'fw_rm_tpc_trw40_feats.p'),
+#                (dict(fw_rm_posq_feats.items() + tpc_f.items() + \
+#                      trw40.items()),
+#                 'fw_rm_posq_tpc_trw40_feats.p'),
+#                (dict(fw_vbz_sx1_feats.items() + tpc_f.items() + \
+#                      trw40.items()),
+#                 'fw_vbz_sx1_tpc_trw40_feats.p'),
+#                (dict(fw_vbz_sx1_posq_feats.items() + tpc_f.items() + \
+#                      trw40.items()),
+#                 'fw_vbz_sx1_posq_tpc_trw40_feats.p'),
+#                #(dict(fw_vbz_s_feats.items() + tpc_f.items() + \
+#                #      trw40.items()),
+#                # 'fw_vbz_s_tpc_trw40_feats.p'),
+#                #(dict(fw_vbz_s_posq_feats.items() + tpc_f.items() + \
+#                #      trw40.items()),
+#                #'fw_vbz_s_posq_tpc_trw40_feats.p'),
+#
+#                (dict(vbz_feats.items() + tpc_f.items() + trw60.items()),
+#                 'vbz_tpc_trw60_feats.p'),
+#                (dict(vbz_posq_feats.items() + tpc_f.items() + \
+#                      trw60.items()),
+#                 'vbz_posq_tpc_trw60_feats.p'),
+#                (dict(fw_feats.items() + tpc_f.items() + \
+#                      trw60.items()),
+#                 'fw_tpc_tpc_trw60_feats.p'),
+#                (dict(fw_posq_feats.items() + tpc_f.items() + \
+#                      trw60.items()), 
+#                 'fw_posq_tpc_trw60_feats.p'),
+#                (dict(rm_feats.items() + tpc_f.items() + trw60.items()), 
+#                 'rm_tpc_trw60_feats.p'),
+#                (dict(rm_posq_feats.items() + tpc_f.items() + trw60.items()),
+#                 'rm_posq_tpc_trw60_feats.p'),
+#                (dict(sx1_feats.items() + tpc_f.items() + trw60.items()),
+#                 'sx1_tpc_trw60_feats.p'),
+#                (dict(sx1_posq_feats.items() + tpc_f.items() + trw60.items()),
+#                 'sx1_posq_tpc_trw60_feats.p'),
+#                (dict(sx2_feats.items() + tpc_f.items() + trw60.items()),
+#                 'sx2_tpc_trw60_feats.p'),
+#                (dict(sx2_posq_feats.items() + tpc_f.items() + trw60.items()),
+#                 'sx2_posq_tpc_trw60_feats.p'),
+#                (dict(sx12_feats.items() + tpc_f.items() + trw60.items()),
+#                 'sx12_tpc_trw60_feats.p'),
+#                (dict(sx12_posq_feats.items() + tpc_f.items() + \
+#                      trw60.items()),
+#                 'sx12_posq_tpc_trw60_feats.p'),
+#                #(dict(s_feats.items() + tpc_f.items() + trw60.items()),
+#                # 's_tpc_trw60_feats.p'),
+#                #(dict(s_posq_feats.items() + tpc_f.items() + trw60.items()),
+#                # 's_posq_tpc_trw60_feats.p'),
+#                (dict(fw_vbz_feats.items() + tpc_f.items() + trw60.items()),
+#                 'fw_vbz_tpc_trw60_feats.p'),
+#                (dict(fw_vbz_posq_feats.items() + tpc_f.items() + \
+#                      trw60.items()),
+#                 'fw_vbz_posq_tpc_trw60_feats.p'),
+#                (dict(fw_rm_feats.items() + tpc_f.items() + trw60.items()),
+#                 'fw_rm_tpc_trw60_feats.p'),
+#                (dict(fw_rm_posq_feats.items() + tpc_f.items() + \
+#                      trw60.items()),
+#                 'fw_rm_posq_tpc_trw60_feats.p'),
+#                (dict(fw_vbz_sx1_feats.items() + tpc_f.items() + \
+#                      trw60.items()),
+#                 'fw_vbz_sx1_tpc_trw60_feats.p'),
+#                (dict(fw_vbz_sx1_posq_feats.items() + tpc_f.items() + \
+#                      trw60.items()),
+#                 'fw_vbz_sx1_posq_tpc_trw60_feats.p'),
+#                #(dict(fw_vbz_s_feats.items() + tpc_f.items() + \
+#                #      trw60.items()),
+#                # 'fw_vbz_s_tpc_trw60_feats.p'),
+#                #(dict(fw_vbz_s_posq_feats.items() + tpc_f.items() + \
+#                #      trw60.items()),
+#                # 'fw_vbz_s_posq_tpc_trw60_feats.p'),
+#
+#                (dict(vbz_feats.items() + tpc_f.items() + trw80.items()),
+#                 'vbz_tpc_trw80_feats.p'),
+#                (dict(vbz_posq_feats.items() + tpc_f.items() + \
+#                      trw80.items()),
+#                 'vbz_posq_tpc_trw80_feats.p'),
+#                (dict(fw_feats.items() + tpc_f.items() + \
+#                      trw80.items()),
+#                 'fw_tpc_tpc_trw80_feats.p'),
+#                (dict(fw_posq_feats.items() + tpc_f.items() + \
+#                      trw80.items()), 
+#                 'fw_posq_tpc_trw80_feats.p'),
+#                (dict(rm_feats.items() + tpc_f.items() + trw80.items()), 
+#                 'rm_tpc_trw80_feats.p'),
+#                (dict(rm_posq_feats.items() + tpc_f.items() + trw80.items()),
+#                 'rm_posq_tpc_trw80_feats.p'),
+#                (dict(sx1_feats.items() + tpc_f.items() + trw80.items()),
+#                 'sx1_tpc_trw80_feats.p'),
+#                (dict(sx1_posq_feats.items() + tpc_f.items() + trw80.items()),
+#                 'sx1_posq_tpc_trw80_feats.p'),
+#                (dict(sx2_feats.items() + tpc_f.items() + trw80.items()),
+#                 'sx2_tpc_trw80_feats.p'),
+#                (dict(sx2_posq_feats.items() + tpc_f.items() + trw80.items()),
+#                 'sx2_posq_tpc_trw80_feats.p'),
+#                (dict(sx12_feats.items() + tpc_f.items() + trw80.items()),
+#                 'sx12_tpc_trw80_feats.p'),
+#                (dict(sx12_posq_feats.items() + tpc_f.items() + \
+#                      trw80.items()),
+#                 'sx12_posq_tpc_trw80_feats.p'),
+#                #(dict(s_feats.items() + tpc_f.items() + trw80.items()),
+#                # 's_tpc_trw80_feats.p'),
+#                #(dict(s_posq_feats.items() + tpc_f.items() + trw80.items()),
+#                # 's_posq_tpc_trw80_feats.p'),
+#                (dict(fw_vbz_feats.items() + tpc_f.items() + trw80.items()),
+#                 'fw_vbz_tpc_trw80_feats.p'),
+#                (dict(fw_vbz_posq_feats.items() + tpc_f.items() + \
+#                      trw80.items()),
+#                 'fw_vbz_posq_tpc_trw80_feats.p'),
+#                (dict(fw_rm_feats.items() + tpc_f.items() + trw80.items()),
+#                 'fw_rm_tpc_trw80_feats.p'),
+#                (dict(fw_rm_posq_feats.items() + tpc_f.items() + \
+#                      trw80.items()),
+#                 'fw_rm_posq_tpc_trw80_feats.p'),
+#                (dict(fw_vbz_sx1_feats.items() + tpc_f.items() + \
+#                      trw80.items()),
+#                 'fw_vbz_sx1_tpc_trw80_feats.p'),
+#                (dict(fw_vbz_sx1_posq_feats.items() + tpc_f.items() + \
+#                      trw80.items()),
+#                 'fw_vbz_sx1_posq_tpc_trw80_feats.p'),
+#                #(dict(fw_vbz_s_feats.items() + tpc_f.items() + \
+#                #      trw80.items()),
+#                # 'fw_vbz_s_tpc_trw80_feats.p'),
+#                #(dict(fw_vbz_s_posq_feats.items() + tpc_f.items() + \
+#                #      trw80.items()),
+#                # 'fw_vbz_s_posq_tpc_trw80_feats.p'),
+#
+#                (dict(vbz_feats.items() + tpc_f.items() + trw100.items()),
+#                 'vbz_tpc_trw100_feats.p'),
+#                (dict(vbz_posq_feats.items() + tpc_f.items() + \
+#                      trw100.items()),
+#                 'vbz_posq_tpc_trw100_feats.p'),
+#                (dict(fw_feats.items() + tpc_f.items() + \
+#                      trw100.items()),
+#                 'fw_tpc_tpc_trw100_feats.p'),
+#                (dict(fw_posq_feats.items() + tpc_f.items() + \
+#                      trw100.items()), 
+#                 'fw_posq_tpc_trw100_feats.p'),
+#                (dict(rm_feats.items() + tpc_f.items() + trw100.items()), 
+#                 'rm_tpc_trw100_feats.p'),
+#                (dict(rm_posq_feats.items() + tpc_f.items() + trw100.items()),
+#                 'rm_posq_tpc_trw100_feats.p'),
+#                (dict(sx1_feats.items() + tpc_f.items() + trw100.items()),
+#                 'sx1_tpc_trw100_feats.p'),
+#                (dict(sx1_posq_feats.items() + tpc_f.items() + trw100.items()),
+#                 'sx1_posq_tpc_trw100_feats.p'),
+#                (dict(sx2_feats.items() + tpc_f.items() + trw100.items()),
+#                 'sx2_tpc_trw100_feats.p'),
+#                (dict(sx2_posq_feats.items() + tpc_f.items() + trw100.items()),
+#                 'sx2_posq_tpc_trw100_feats.p'),
+#                (dict(sx12_feats.items() + tpc_f.items() + trw100.items()),
+#                 'sx12_tpc_trw100_feats.p'),
+#                (dict(sx12_posq_feats.items() + tpc_f.items() + \
+#                      trw100.items()),
+#                 'sx12_posq_tpc_trw100_feats.p'),
+#                #(dict(s_feats.items() + tpc_f.items() + trw100.items()),
+#                # 's_tpc_trw100_feats.p'),
+#                #(dict(s_posq_feats.items() + tpc_f.items() + trw100.items()),
+#                # 's_posq_tpc_trw100_feats.p'),
+#                (dict(fw_vbz_feats.items() + tpc_f.items() + trw100.items()),
+#                 'fw_vbz_tpc_trw100_feats.p'),
+#                (dict(fw_vbz_posq_feats.items() + tpc_f.items() + \
+#                      trw100.items()),
+#                 'fw_vbz_posq_tpc_trw100_feats.p'),
+#                (dict(fw_rm_feats.items() + tpc_f.items() + trw100.items()),
+#                 'fw_rm_tpc_trw100_feats.p'),
+#                (dict(fw_rm_posq_feats.items() + tpc_f.items() + \
+#                      trw100.items()),
+#                 'fw_rm_posq_tpc_trw100_feats.p'),
+#                (dict(fw_vbz_sx1_feats.items() + tpc_f.items() + \
+#                      trw100.items()),
+#                 'fw_vbz_sx1_tpc_trw100_feats.p'),
+#                (dict(fw_vbz_sx1_posq_feats.items() + tpc_f.items() + \
+#                      trw100.items()),
+#                 'fw_vbz_sx1_posq_tpc_trw100_feats.p'),
+#                #(dict(fw_vbz_s_feats.items() + tpc_f.items() + \
+#                #      trw100.items()),
+#                # 'fw_vbz_s_tpc_trw100_feats.p'),
+#                #(dict(fw_vbz_s_posq_feats.items() + tpc_f.items() + \
+#                #      trw100.items()),
+#                # 'fw_vbz_s_posq_tpc_trw100_feats.p')
                ]
 
 dbg_settings = [(dbg_feats, 'dbg_feats.p')]
@@ -162,20 +447,19 @@ def main():
         print u'Mode: ###DEBUG MODE###'
         settings = dbg_settings
         opts['iters'] = 1
-        train_topic_mapper = build_topic_mapper(None, 1)
+        topic_mapper = build_topic_mapper(None, 1)
 
     elif tpc_file is not None:
 
-        topic_classifier = topics.load_topics(tpc_file)
-
-        train_topic_mapper = build_topic_mapper(topic_classifier, 1)
+        topic_classifier = topics.load_multigran_clusters(tpc_file)
+        topic_mapper = build_topic_mapper(topic_classifier, 1)
 
         settings = tpc_settings
         print u'Mode: topic features'
 
     else:
 
-        train_topic_mapper = build_topic_mapper(None, 1)
+        topic_mapper = build_topic_mapper(None, 1)
 
         settings = ftr_settings
         print u'Mode: non-topic features'
@@ -196,20 +480,29 @@ def main():
             tpc_basename = os.path.basename(tpc_file.replace(u'.txt', u''))
             pfile = u'{}_{}'.format(tpc_basename, pfile)
         pfile = u'{}gram_{}'.format(opts['ngram'], pfile)
-        pfile = u'{}_{}_{}'.format(opts['learner'],
-                                   opts['loss-func'], pfile)
-
+        pfile = u'{}_{}_{}_{}'.format(opts['learner'],
+                                      opts['loss-func'], opts['inference'], 
+                                      pfile)
         outfile = os.path.join(outdir, pfile)
         if os.path.exists(outfile):
             print u'{} already exists, moving on...'.format(outfile)
             continue
 
+        use_cache = True if opts['inference'] == 'beam' else False
+        if opts['ngram'] > 2:
+            use_cache = False 
+        
         print u'Training {}...'.format(pfile)
         trainX, gold_trainY = make_data(feats, traindocs,
-                                        train_topic_mapper, opts['ngram'])
+                                        topic_mapper, opts['ngram'],
+                                        use_cache)
         learner = build_learner(opts)
-        learner.fit(trainX, gold_trainY)
 
+        start_time = datetime.now()
+        learner.fit(trainX, gold_trainY)
+        elapsed_time = datetime.now() - start_time
+        
+        print u'Training time: {}'.format(elapsed_time)    
         print u'Pickling model and data...'
         with open(outfile, 'wb') as f:
             pickle.dump({'learner': learner,
@@ -221,24 +514,30 @@ def main():
                          'devdir': devdir,
                          'testdir': testdir,
                          'topic_files': tpc_file,
+                         'traintime': elapsed_time
                          },
                         f)
 
-        print pfile, learner.learner.w
+
+        #print pfile, learner.learner.w
 def build_learner(opts):
-    use_gurobi = True if opts['inference'] == 'gurobi' else False
-    return learners.Learner(use_gurobi, False, False, opts['learner'],
-                            opts['loss-func'], opts['iters'])
+    return learners.Learner(inference=opts['inference'], 
+                            use_relaxed=False, 
+                            verbose=False, 
+                            algorithm=opts['learner'],
+                            loss=opts['loss-func'], 
+                            max_iter=opts['iters'],
+                            )
 
 def build_topic_mapper(topic_classifier, k):
 
     def tm(doc):
-        mapping = {}
+        mapping = []
         nsents = len(doc)
         for i, s in enumerate(doc):
             words = topics.filter_tokens(s)
             instance = topics.make_instance(words, i, nsents)
-            mapping[i] = topic_classifier(instance, k)
+            mapping.append(topic_classifier(instance, k))
         return mapping
 
     def no_class(doc):
@@ -249,8 +548,8 @@ def build_topic_mapper(topic_classifier, k):
         return no_class
 
 
-def make_data(feats, docs, tmapper, ngram):
-    X = [NGramDiscourseInstance(doc, feats, tmapper(doc), ngram)
+def make_data(feats, docs, tmapper, ngram, use_cache):
+    X = [NGramDiscourseInstance(doc, feats, tmapper(doc), ngram, use_cache)
          for doc in docs]
     Y = [x.gold_transitions() for x in X]
     return X, Y

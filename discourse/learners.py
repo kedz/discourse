@@ -8,9 +8,11 @@ from itertools import izip
 import numpy as np
 import pulp
 import discourse.lattice as lattice
+from datetime import datetime, timedelta
+import time
 
 class DiscourseSequenceModel(model.DynamicProgrammingModel):
-    def __init__(self, constrained=True, use_gurobi=True,
+    def __init__(self, constrained=True, use_gurobi=False, use_beam=True,
                  use_relaxed=False, verbose=False,
                  loss_function='01'):
         self.inference_calls = 0
@@ -18,9 +20,15 @@ class DiscourseSequenceModel(model.DynamicProgrammingModel):
         self._loss_function = loss_function
         self._constrained = constrained
         self._use_gurobi = use_gurobi
+        self._use_beam = use_beam
         self._use_relaxed = use_relaxed
         self._debug = verbose
 
+        self._total_graph_cons_time = 0
+        self._total_potential_cons_time = 0
+        self._total_constraint_cons_time = 0
+        self._total_inference_time = 0
+    
     def dynamic_program(self, discourse_model, c):
         return lattice.build_ngram_lattice(discourse_model, c)
 
@@ -32,25 +40,29 @@ class DiscourseSequenceModel(model.DynamicProgrammingModel):
         constraints = cons.Constraints(hypergraph,
                                 [('s-{}'.format(i), -1)
                                  for i in range(nsents)])
-        print "gen"
         g = [lattice.build_constraints(edge.label)
              for edge in hypergraph.edges]
-        print "done"
         constraints.from_vector(g)
-        print "vec"
+        return constraints
+
         return constraints
 
     def beam_constraints(self, discourse_model, hypergraph):
         """
         For beam search. Transposed constraints.
+
         """
-        print "gen"
-        gen = [ph.Bitset(edge.label.to)
-               for edge in hypergraph.edges]
-        print "done"
+
+        gen = []
+        for edge in hypergraph.edges:
+            b = ph.Bitset()
+            b[edge.label.to] = 1
+            gen.append(b)
+
+        #gen = [ph.Bitset(edge.label.to )
+        #       for edge in hypergraph.edges]
         constraints = ph.BinaryVectorPotentials(hypergraph) \
             .from_vector(gen)
-        print "vec"
         return constraints
 
     def build_groups(self, hypergraph):
@@ -61,7 +73,7 @@ class DiscourseSequenceModel(model.DynamicProgrammingModel):
 
     def loss(self, y, y_hat):
         if self._loss_function == '01':
-            return self.zero_one_loss(y, y_hat, verbose=True)
+            return self.zero_one_loss(y, y_hat, verbose=False)
         elif self._loss_function == 'hamming-node':
             return self.hamming_node_loss(y, y_hat)
         elif self._loss_function == 'hamming-edge':
@@ -94,34 +106,61 @@ class DiscourseSequenceModel(model.DynamicProgrammingModel):
         return total_loss
 
     # Overloading inference to try beam search.
-    def inference(self, x, w, relaxed=False, beam=True):
+    def inference(self, x, w, relaxed=False, verbose=True):
         self.inference_calls += 1
-        print "building "
+
+        start_time = int(round(time.time() * 1000)) 
         hypergraph = self._build_hypergraph(x)
-        beam_constraints = self.beam_constraints(x, hypergraph)
-        # print "constraints"
-        # constraints = self.constraints(x, hypergraph)
-
-        print "pots "
+        elapsed_time = int(round(time.time() * 1000)) - start_time
+        if verbose:
+            print 'Graph Construction Time (size: {}):'.format(x.nsents),
+            print str(timedelta(milliseconds=elapsed_time))
+        self._total_graph_cons_time += elapsed_time
+        
+        start_time = int(round(time.time() * 1000)) 
         potentials = self._build_potentials(hypergraph, x, w)
-        print "done constraints"
+        elapsed_time = int(round(time.time() * 1000)) - start_time
+        if verbose:
+            print 'Edge Potential Construction Time:',
+            print str(timedelta(milliseconds=elapsed_time))
+        self._total_potential_cons_time += elapsed_time
 
+        start_time = int(round(time.time() * 1000)) 
+        if self._use_beam:
+            beam_constraints = self.beam_constraints(x, hypergraph)
+        else: 
+            constraints = self.constraints(x, hypergraph)
+        elapsed_time = int(round(time.time() * 1000)) - start_time
+        if verbose:
+            print 'Constraint Construction Time:',
+            print str(timedelta(milliseconds=elapsed_time))
+        self._total_constraint_cons_time += elapsed_time
+
+        
 
         # FOR DEBUGGING
 
-        if not beam:
-            print "Running ILP"
+        start_time = int(round(time.time() * 1000))
+        if not self._use_beam:
+            if verbose:
+                print "Running ILP"
             hyperlp = lp.HypergraphLP.make_lp(hypergraph,
                                               potentials,
                                               integral=True)
             hyperlp.add_constraints(constraints)
-            hyperlp.solve(pulp.solvers.GLPK(mip=1))
-            print "OBJECTIVE",str(hyperlp.objective)
+            if self._use_gurobi:
+                hyperlp.solve(pulp.solvers.GUROBI(mip=1 if not relaxed else 0))
+            else:
+                hyperlp.solve(pulp.solvers.GLPK(mip=1 if not relaxed else 0))
+
+            if verbose:
+                print "ILP OBJECTIVE",str(hyperlp.objective)
             path = hyperlp.path
 
         # BEAM SEARCH
         else:
-            print "start beam"
+            if verbose:
+                print "Running Beam Search"
             groups = self.build_groups(hypergraph)
             num_groups = max(groups) + 1
 
@@ -138,11 +177,18 @@ class DiscourseSequenceModel(model.DynamicProgrammingModel):
                                                      [1000] * num_groups,
                                                      num_groups)
             path = beam_chart.path(0)
-        print "OBJECTIVE", potentials.dot(path)
+
+        if verbose:
+            print "OBJECTIVE", potentials.dot(path)
+
+        elapsed_time = int(round(time.time() * 1000)) - start_time
+        if verbose:
+            print 'Inference Time:',
+            print str(timedelta(milliseconds=elapsed_time))
+        self._total_inference_time += elapsed_time
 
         y = set([edge.label for edge in path])
         return y
-
 
     def hamming_node_loss(self, y, y_hat, verbose=False):
         s2i = lattice.s2i
@@ -264,7 +310,7 @@ class DiscourseSequenceModel(model.DynamicProgrammingModel):
             l = lf(y, [edge.label])
             scores[i] += l
 
-        return ph.Potentials(hypergraph).from_vector(scores)
+        return ph.LogViterbiPotentials(hypergraph).from_vector(scores)
 
     def joint_feature(self, x, y):
         joint_feature_map = {}
@@ -278,16 +324,44 @@ class DiscourseSequenceModel(model.DynamicProgrammingModel):
         f = np.array(f.todense()).flatten().transpose()
         return f
 
+    def _lattice_constraints(self, x):
+
+        height = x.nsents**x.ngrams
+        width = x.nsents
+        
+        cons = []
+        if x.ngrams == 2:
+            for i in xrange(height):
+                for j in xrange(height):
+                    if i != j:
+                        cons.append(tuple([i,j]))
+        else:
+            for i in xrange(1, height + 1):
+                for j in xrange(1, height + 1):
+                    if i != j and ((i-1) % width) == (i - 1) / width:
+                        cons.append(tuple([i,j]))              
 
 class Learner:
-    def __init__(self, use_gurobi=True,
+    def __init__(self, inference='beam',
                  use_relaxed=False, verbose=False,
                  algorithm='perceptron', loss='01',
                  max_iter=10):
 
-        self.dsm = DiscourseSequenceModel(True, use_gurobi,
-                                          use_relaxed, verbose,
-                                          loss)
+        if inference == 'gurobi':
+            use_gurobi = True
+        else:
+            use_gurobi = False
+        if inference == 'beam':
+            use_beam = True
+        else:
+            use_beam = False
+
+        self.dsm = DiscourseSequenceModel(constrained=True, 
+                                          use_gurobi=use_gurobi, 
+                                          use_beam=use_beam,
+                                          use_relaxed=use_relaxed,
+                                          verbose=verbose,
+                                          loss_function=loss)
 
         if algorithm == 'perceptron':
             self.learner = StructuredPerceptron(self.dsm,
@@ -307,9 +381,17 @@ class Learner:
         with warnings.catch_warnings():
             warnings.simplefilter('ignore')
             self.learner.fit(trainX, trainY)
+        
+        if trainX[0]._use_cache is True:
+            import gc
+            for x in trainX:
+                x._f_cache = {}
+            gc.collect()
+                
 
     def predict(self, testX):
         predY = self.learner.predict(testX)
+
         return predY
 
     def score(self, testX, testY):
@@ -317,77 +399,3 @@ class Learner:
 
     def weights(self):
         return self.dsm._vec.inverse_transform(self.learner.w)
-
-
-
-#class PerceptronTrainer:
-#    def __init__(self, max_iter=25, verbose=False):
-#        self.dsm = DiscourseSequenceModelZeroOne(True)
-#        self.learner = StructuredPerceptron(self.dsm,
-#                                            verbose=(1 if verbose else 0),
-#                                            max_iter=max_iter,
-#                                            average=True)
-#
-#    def fit(self, trainX, trainY):
-#        import warnings
-#
-#        with warnings.catch_warnings():
-#            warnings.simplefilter('ignore')
-#            self.learner.fit(trainX, trainY)
-#
-#    def predict(self, testX):
-#        predY = self.learner.predict(testX)
-#        return predY
-#
-#    def score(self, testX, testY):
-#        return self.sp.score(testX, testY)
-#
-#    def weights(self):
-#        return self.dsm._vec.inverse_transform(self.learner.w)
-#
-#class SubgradientLearner:
-#    def __init__(self, max_iter=25, verbose=False, loss=None):
-#
-#        if loss == '01':
-#            self.dsm = DiscourseSequenceModelZeroOne(True)
-#        elif loss == 'hamming':
-#            self.dsm = DiscourseSequenceModelHammingLoss(True)
-#
-#        self.learner = SubgradientSSVM(self.dsm,
-#                                       verbose=(1 if verbose else 0),
-#                                       max_iter=max_iter)
-#
-##        if loss is None:
-##            loss = '01'
-#
-##        if loss == '01':
-##            self.dsm.loss = self.dsm.zero_one_loss
-##            self.dsm.loss_augmented_inference = self.inference
-#
-##        if loss == 'hamming':
-##            self.dsm.loss =  self.dsm.hamming_loss
-##            self.dsm.loss_augmented_inference = \
-##                self.dsm.hamming_loss_aug_inference
-#
-#
-#    def fit(self, trainX, trainY):
-#        import warnings
-#
-#        with warnings.catch_warnings():
-#            warnings.simplefilter('ignore')
-#            self.learner.fit(trainX, trainY)
-#
-#    def predict(self, testX):
-#        predY = self.learner.predict(testX)
-#        return predY
-#
-#    def score(self, testX, testY):
-#        return self.learner.score(testX, testY)
-#
-#    def weights(self):
-#        return self.dsm._vec.inverse_transform(self.learner.w)
-
-
-#    def get_score(self, x, y):
-#        features = ptron.dsm.psi(x, y)
-#        return features * ptron.sp.w.T
