@@ -19,8 +19,9 @@ class SentenceNGram:
     def __str__(self):
         return u'{}: {}'.format(self.position, u'->'.join(self.labels[::-1]))
 
-class Transition:
-    def __init__(self, labels, position):
+cdef class Transition:
+
+    def __cinit__(self, list labels, int position):
         self.labels = labels
         self.position = position
         self.idxs = [s2i(label, end=position) for label in labels]
@@ -29,9 +30,25 @@ class Transition:
     def _attrs(self):
         return (self.labels, self.position)
 
-    def __eq__(self, other):
-        return isinstance(other, Transition) and \
-            self._attrs() == other._attrs()
+#<   0
+#==  2
+#>   4
+#<=  1
+#!=  3
+#>=  5
+    def __richcmp__(self, other, int op):
+        if op == 2:      
+            return isinstance(other, Transition) and \
+                self._attrs() == other._attrs()
+        elif op == 3:
+            return not (isinstance(other, Transition) and \
+                self._attrs() == other._attrs())
+        else:
+            return 0
+
+#    def __eq__(self, other):
+#        return isinstance(other, Transition) and \
+#            self._attrs() == other._attrs()
 
     def __hash__(self):
         return hash(self._attrs())
