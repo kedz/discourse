@@ -13,23 +13,23 @@ class TestLearnerLoss:
 
         self.dsm = DiscourseSequenceModel()
         
-        self.y = set([Transition(('s-0', 'START'), 0), 
-                      Transition(('s-1', 's-0'), 1), 
-                      Transition(('s-2', 's-1'), 2), 
-                      Transition(('s-3', 's-2'), 3), 
-                      Transition(('END', 's-3'), 4)]) 
+        self.y = set([Transition((0, -1), 0), 
+                      Transition((1, 0), 1), 
+                      Transition((2, 1), 2), 
+                      Transition((3, 2), 3), 
+                      Transition((4, 3), 4)]) 
 
-        self.y_hat1 = set([Transition(('s-0', 'START'), 0), 
-                           Transition(('s-2', 's-0'), 1), 
-                           Transition(('s-1', 's-2'), 2), 
-                           Transition(('s-3', 's-1'), 3), 
-                           Transition(('END', 's-3'), 4)]) 
+        self.y_hat1 = set([Transition((0, -1), 0), 
+                           Transition((2, 0), 1), 
+                           Transition((1, 2), 2), 
+                           Transition((3, 1), 3), 
+                           Transition((4, 3), 4)]) 
  
-        self.y_hat2 = set([Transition(('s-0', 'START'), 0), 
-                           Transition(('s-1', 's-0'), 1), 
-                           Transition(('s-2', 's-1'), 2), 
-                           Transition(('s-3', 's-2'), 3), 
-                           Transition(('END', 's-3'), 4)]) 
+        self.y_hat2 = set([Transition((0, -1), 0), 
+                           Transition((1, 0), 1), 
+                           Transition((2, 1), 2), 
+                           Transition((3, 2), 3), 
+                           Transition((4, 3), 4)]) 
    
     def zero_one_loss_test(self):
         assert self.dsm.zero_one_loss(self.y, self.y_hat1, False) == 1
@@ -2092,7 +2092,6 @@ class TestLearnerAndModel:
         dsm._vec.fit_transform({'DEBUG': 1})
         
         potentials = dsm._build_hamming_potentials(hypergraph, inst, y, w)
-
         for i, edge in enumerate(hypergraph.edges):
             assert dsm.hamming_node_loss(y, [edge.label]) == potentials[edge]
 

@@ -2183,11 +2183,11 @@ class TestNGramModel:
         self.doc2 = corenlp.Document(f2)
 
     def gold_transition_bigram_test(self):
-        correct_trans = (Transition(('s-0', 'START'), 0), 
-                         Transition(('s-1', 's-0'), 1), 
-                         Transition(('s-2', 's-1'), 2), 
-                         Transition(('s-3', 's-2'), 3), 
-                         Transition(('END', 's-3'), 4)) 
+        correct_trans = (Transition((0, -1), 0), 
+                         Transition((1, 0), 1), 
+                         Transition((2, 1), 2), 
+                         Transition((3, 2), 3), 
+                         Transition((4, 3), 4)) 
 
        
         inst = NGramDiscourseInstance(self.doc, {}, None, 2)
@@ -2196,11 +2196,11 @@ class TestNGramModel:
         assert correct_trans == gold_trans
 
     def gold_transition_trigram_test(self):
-        correct_trans = (Transition(('s-0', 'START', 'START'), 0), 
-                         Transition(('s-1', 's-0', 'START'), 1), 
-                         Transition(('s-2', 's-1', 's-0'), 2), 
-                         Transition(('s-3', 's-2', 's-1'), 3), 
-                         Transition(('END', 's-3', 's-2'), 4)) 
+        correct_trans = (Transition((0, -1, -1), 0), 
+                         Transition((1, 0, -1), 1), 
+                         Transition((2, 1, 0), 2), 
+                         Transition((3, 2, 1), 3), 
+                         Transition((4, 3, 2), 4)) 
 
        
         inst = NGramDiscourseInstance(self.doc, {}, None, 3)
@@ -2211,25 +2211,25 @@ class TestNGramModel:
     def debug_feature_bigram_test(self):
         inst = NGramDiscourseInstance(self.doc, {}, None, 2)
         fmap1 = {}
-        t1 = Transition(('s-3', 's-2'), 3)
+        t1 = Transition((3, 2), 3)
         inst._f_debug(fmap1, t1)
 
         assert fmap1.get('DEBUG', 0) == 1
 
         fmap2 = {}
-        t2 = Transition(('s-3', 's-1'), 3)
+        t2 = Transition((3, 1), 3)
         inst._f_debug(fmap2, t2)
         
         assert fmap2.get('DEBUG', 0) == 0
 
         fmap3 = {}
-        t3 = Transition(('s-0', 'START'), 0)
+        t3 = Transition((0, -1), 0)
         inst._f_debug(fmap3, t3)
         
         assert fmap3.get('DEBUG', 0) == 1
 
         fmap4 = {}
-        t4 = Transition(('s-3', 'START'), 0)
+        t4 = Transition((3, -1), 0)
         inst._f_debug(fmap4, t4)
         
         assert fmap4.get('DEBUG', 0) == 0
@@ -2237,25 +2237,25 @@ class TestNGramModel:
     def debug_feature_trigram_test(self):
         inst = NGramDiscourseInstance(self.doc, {}, None, 3)
         fmap1 = {}
-        t1 = Transition(('s-3', 's-2', 's-1'), 3)
+        t1 = Transition((3, 2, 1), 3)
         inst._f_debug(fmap1, t1)
 
         assert fmap1.get('DEBUG', 0) == 1
 
         fmap2 = {}
-        t2 = Transition(('s-3', 's-1', 's-2'), 3)
+        t2 = Transition((3, 1, 2), 3)
         inst._f_debug(fmap2, t2)
         
         assert fmap2.get('DEBUG', 0) == 0
 
         fmap3 = {}
-        t3 = Transition(('s-0', 'START', 'START'), 0)
+        t3 = Transition((0, -1, -1), 0)
         inst._f_debug(fmap3, t3)
         
         assert fmap3.get('DEBUG', 0) == 1
 
         fmap4 = {}
-        t4 = Transition(('s-3', 'START', 'START'), 0)
+        t4 = Transition((3, -1, -1), 0)
         inst._f_debug(fmap4, t4)
         
         assert fmap4.get('DEBUG', 0) == 0
@@ -2263,7 +2263,7 @@ class TestNGramModel:
     def first_word_feature_bigram_test(self):
         inst = NGramDiscourseInstance(self.doc, {'first_word': True}, None, 2)
         fmap1 = {}
-        t1 = Transition(('s-2', 's-1'), 2)
+        t1 = Transition((2, 1), 2)
         inst._f_first_word(fmap1, t1)
         
         valid_feats1 = set(['First Word: beijing --> no',
@@ -2283,7 +2283,7 @@ class TestNGramModel:
             assert fmap1[f] == 1
 
         fmap2 = {}
-        t2 = Transition(('s-1', 'START'), 0)
+        t2 = Transition((1, -1), 0)
         inst._f_first_word(fmap2, t2)
         
         valid_feats2 = set(['First Word: START --> beijing',
@@ -2295,7 +2295,7 @@ class TestNGramModel:
             assert fmap2[f] == 1
 
         fmap3 = {}
-        t3 = Transition(('END', 's-3'), 5)
+        t3 = Transition((4, 3), 4)
         inst._f_first_word(fmap3, t3)
         
         valid_feats3 = set(['First Word: he --> END',
@@ -2309,7 +2309,7 @@ class TestNGramModel:
     def first_word_feature_trigram_test(self):
         inst = NGramDiscourseInstance(self.doc, {'first_word': True}, None, 3)
         fmap1 = {}
-        t1 = Transition(('s-3', 's-2', 's-1'), 3)
+        t1 = Transition((3, 2, 1), 3)
         inst._f_first_word(fmap1, t1)
         
         valid_feats1 = set(['First Word: beijing --> no --> he',
@@ -2329,7 +2329,7 @@ class TestNGramModel:
             assert fmap1[f] == 1
 
         fmap2 = {}
-        t2 = Transition(('s-1', 'START', 'START'), 0)
+        t2 = Transition((1, -1, -1), 0)
         inst._f_first_word(fmap2, t2)
         
         valid_feats2 = set(['First Word: START --> START --> beijing',
@@ -2341,7 +2341,7 @@ class TestNGramModel:
             assert fmap2[f] == 1
 
         fmap3 = {}
-        t3 = Transition(('END', 's-3', 's-2'), 5)
+        t3 = Transition((4, 3, 2), 4)
         inst._f_first_word(fmap3, t3)
         
         valid_feats3 = set(['First Word: no --> he --> END',
@@ -2359,7 +2359,7 @@ class TestNGramModel:
                                        'relative_position_qtr': True},
                                       None, 2)
 
-        t1 = Transition(('s-0', 'START'), 0)
+        t1 = Transition((0, -1), 0)
         fmap1 = inst.feature_map(t1)
         
         valid_feats1 = set(['DEBUG',
@@ -2368,8 +2368,9 @@ class TestNGramModel:
         for f in fmap1.keys():
             assert f in valid_feats1
             assert fmap1[f] == 1
+        assert '(1Q QTR) DEBUG' in fmap1
 
-        t2 = Transition(('s-1', 's-0'), 1)
+        t2 = Transition((1, 0), 1)
         fmap2 = inst.feature_map(t2)
         
         valid_feats2 = set(['DEBUG',
@@ -2378,8 +2379,8 @@ class TestNGramModel:
         for f in fmap2.keys():
             assert f in valid_feats2
             assert fmap2[f] == 1
-
-        t3 = Transition(('s-2', 's-1'), 2)
+        assert '(1Q QTR) DEBUG' in fmap2
+        t3 = Transition((2, 1), 2)
         fmap3 = inst.feature_map(t3)
         
         valid_feats3 = set(['DEBUG',
@@ -2388,8 +2389,9 @@ class TestNGramModel:
         for f in fmap3.keys():
             assert f in valid_feats3
             assert fmap3[f] == 1
+        assert '(2Q QTR) DEBUG' in fmap3
 
-        t4 = Transition(('s-3', 's-2'), 3)
+        t4 = Transition((3, 2), 3)
         fmap4 = inst.feature_map(t4)
         
         valid_feats4 = set(['DEBUG',
@@ -2398,8 +2400,9 @@ class TestNGramModel:
         for f in fmap4.keys():
             assert f in valid_feats4
             assert fmap4[f] == 1
+        assert '(3Q QTR) DEBUG' in fmap4
  
-        t5 = Transition(('END', 's-3'), 4)
+        t5 = Transition((4, 3), 4)
         fmap5 = inst.feature_map(t5)
         
         valid_feats5 = set(['DEBUG',
@@ -2408,11 +2411,12 @@ class TestNGramModel:
         for f in fmap5.keys():
             assert f in valid_feats5
             assert fmap5[f] == 1
+        assert '(4Q QTR) DEBUG' in fmap5
 
     def verb_feature_bigram_test(self):
         inst = NGramDiscourseInstance(self.doc, {'verbs': True}, None, 2)
         fmap1 = {}
-        t1 = Transition(('END', 's-1'), 4)
+        t1 = Transition((4, 1), 4)
         inst._f_verbs(fmap1, t1)
         
         valid_feats1 = set(['Verbs: hit --> END',
@@ -2426,7 +2430,7 @@ class TestNGramModel:
     def verb_feature_trigram_test(self):
         inst = NGramDiscourseInstance(self.doc, {'verbs': True}, None, 3)
         fmap1 = {}
-        t1 = Transition(('s-1', 's-0', 'START'), 3)
+        t1 = Transition((1, 0, -1), 3)
         inst._f_verbs(fmap1, t1)
         
         valid_feats1 = set(['Verbs: START --> __ --> hit',
@@ -2465,7 +2469,7 @@ class TestNGramModel:
         inst = NGramDiscourseInstance(self.doc, {'role_match': True}, None, 3)
         
         fmap = {}
-        t1 = Transition(('s-3', 's-2', 'START'), 3)
+        t1 = Transition((3, 2, -1), 3)
         inst._f_role_match(fmap, t1)
 
         fstr1 = 'Role Match: START --> X --> X'
@@ -2608,7 +2612,7 @@ class TestNGramModel:
         inst = NGramDiscourseInstance(self.doc, {'syntax_lev1': True,
                                                  'syntax_lev2':True}, None, 3)
         
-        t1 = Transition(('s-3', 's-2', 'START'), 3)
+        t1 = Transition((3, 2, -1), 3)
         fmap = inst.feature_map(t1)
 
 
@@ -2630,20 +2634,46 @@ class TestNGramModel:
         assert fmap.get(fstr8, 0) == 1
 
 
-    def cache_test(self): 
-        inst1 = NGramDiscourseInstance(self.doc, {'syntax_lev1': True}, None,
-                                       ngram=3, use_cache=True)
-        
-        t1 = Transition(('s-3', 's-2', 'START'), 3)
-        fmap1 = inst1.feature_map(t1)
-        assert t1 in inst1._f_cache
-        assert inst1._f_cache[t1] is fmap1        
+#    def cache_test(self): 
+#        inst1 = NGramDiscourseInstance(self.doc, {'syntax_lev1': True}, None,
+#                                       ngram=3, use_cache=True)
+#        
+#        t1 = Transition((3, 2, -1), 3)
+#        fmap1 = inst1.feature_map(t1)
+#        assert t1 in inst1._f_cache
+#        assert inst1._f_cache[t1] is fmap1        
+#
+#        inst2 = NGramDiscourseInstance(self.doc, {'syntax_lev1': True}, None,
+#                                       ngram=3, use_cache=False)
+#        
+#        t2 = Transition((3, 2, -1), 3)
+#        fmap2 = inst2.feature_map(t2)
+#        assert t2 not in inst2._f_cache           
+#        assert inst2.feature_map(t2) is not fmap2        
 
-        inst2 = NGramDiscourseInstance(self.doc, {'syntax_lev1': True}, None,
-                                       ngram=3, use_cache=False)
+    def local_cache_test(self): 
+        inst = NGramDiscourseInstance(self.doc, {'syntax_lev1': True,
+                                                 'syntax_lev2':True}, None, 3)
         
-        t2 = Transition(('s-3', 's-2', 'START'), 3)
-        fmap2 = inst2.feature_map(t2)
-        assert t2 not in inst2._f_cache           
-        assert inst2.feature_map(t2) is not fmap2        
+        t1 = Transition((3, 2, -1), 3)
+        fmap = inst.feature_map(t1)
+        for k,v in inst._local_edge_feature_cache.items():
+            assert t1.idxs == k
+            assert fmap == v
+
+    def trans_eq_test(self): 
+        inst = NGramDiscourseInstance(self.doc, {'syntax_lev1': True,
+                                                 'syntax_lev2':True}, None, 3)
+       
+        inst.hypergraph() 
+        t1 = Transition((3, 2, -1), 3)
+        t2 = Transition((3, 2, -1), 3)
+
+        assert t1 == t2        
+        #assert t1 is t2
+    
+        from collections import defaultdict
+        fmap = defaultdict(int)
+        fmap[t1] = 1
+        assert fmap[t2] == 1
          
