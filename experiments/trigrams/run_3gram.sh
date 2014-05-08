@@ -22,4 +22,4 @@ python -u train_models.py -train $APWS_TRAIN -dev $APWS_DEV -test $APWS_TEST -od
 
 python -u train_models.py -train $NTSB_TRAIN -dev $NTSB_DEV -test $NTSB_TEST -od models/trigram/ntsb_models -l perceptron -lf 01 -inf beam -n 3 -dbg
 python -u train_models.py -train $NTSB_TRAIN -dev $NTSB_DEV -test $NTSB_TEST -od models/trigram/ntsb_models -l perceptron -lf 01 -inf beam -n 3
-python -u train_models.py -train $NTSB_TRAIN -dev $NTSB_DEV -test $NTSB_TEST -od models/trigam/ntsb_models -l perceptron -lf 01 -inf beam -n 3 -t $CS_DIR/ntsb
+python -u train_models.py -train $NTSB_TRAIN -dev $NTSB_DEV -test $NTSB_TEST -od models/trigram/ntsb_models -l perceptron -lf 01 -inf beam -n 3 -t $CS_DIR/ntsb
