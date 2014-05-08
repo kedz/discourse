@@ -124,11 +124,10 @@ def write_explanation(dataX, gdataY, pdataY, out, name, learner):
             out.write(u'\n\n')
 
             texts = []
-            for label in t.labels[::-1]:
-                idx = lattice.s2i(label, end=u'END')
+            for idx in t.idxs[::-1]:
                 if idx == -1:
                     sent = u'START'
-                elif idx == u'END':
+                elif idx == datax.nsents:
                     sent = u'END'
                 else:
                     sent = unicode(datax.doc.sents[idx])
