@@ -2,33 +2,42 @@ from collections import defaultdict
 import pydecode.hyper as ph
 
 class SentenceNGram:
-    def __init__(self, labels, position):
-        self.labels = labels
+    def __init__(self, idxs, position):
+        self.idxs = idxs
         self.position = position
 
     def _attrs(self):
-        return (self.labels, self.position)
+        return (self.idxs, self.position)
 
     def __eq__(self, other):
         return isinstance(other, SentenceNGram) and \
             self._attrs() == other._attrs()
 
+    def __richcmp__(self, other, int op):
+        if op == 2:      
+            return isinstance(other, Transition) and \
+                self._attrs() == other._attrs()
+        elif op == 3:
+            return not (isinstance(other, Transition) and \
+                self._attrs() == other._attrs())
+        else:
+            return 0
+
     def __hash__(self):
         return hash(self._attrs())
 
     def __str__(self):
-        return u'{}: {}'.format(self.position, u'->'.join(self.labels[::-1]))
+        return u'{}: {}'.format(self.position, u'>'.join(str(i) for i in self.idxs[::-1]))
 
 cdef class Transition:
 
-    def __cinit__(self, list labels, int position):
-        self.labels = labels
+    def __cinit__(self, tuple idxs, int position):
         self.position = position
-        self.idxs = [s2i(label, end=position) for label in labels]
+        self.idxs = idxs
         self.to = self.idxs[0]
 
     def _attrs(self):
-        return (self.labels, self.position)
+        return (self.idxs, self.position)
 
 #<   0
 #==  2
@@ -54,10 +63,10 @@ cdef class Transition:
         return hash(self._attrs())
 
     def __str__(self):
-        return u'{}: {}'.format(self.position, u'->'.join(self.labels[::-1]))
+        return u'{}: {}'.format(self.position, u'>'.join(str(i) for i in self.idxs[::-1]))
 
 
-def build_ngram_lattice(discourse_model, c):
+cpdef build_ngram_lattice(discourse_model, c):
     """ Builds the graph from the discourse model.
 
     Parameters
@@ -74,16 +83,19 @@ def build_ngram_lattice(discourse_model, c):
         The ChartBuilder object, after having constructed the graph.
     """
 
+    cdef int positions, ngram
+    cdef object start_sent
     # The number of sentence positions to predict.
     positions = len(discourse_model.doc.sents)
-
+    
+    cdef int i
     # The set of non 'START' or 'END' sentence labels.
-    node_labels = [u's-{}'.format(i) for i in range(positions)]
-
+    node_labels = [i for i in range(positions)]
+    
     # The start node of the graph with label 'START' and position -1.
     # Everyone has to start somewhere :)
     ngram = discourse_model.ngram
-    padding = tuple([u'START']) * (ngram - 1)
+    padding = tuple([-1]) * (ngram - 1)
     start_sent = SentenceNGram(tuple(padding), -1)
 
     # As we build the graph, this will hold the previous position's
@@ -94,42 +106,48 @@ def build_ngram_lattice(discourse_model, c):
     # Initialize the graph construction.
     c.init(start_sent)
     nodes.add(start_sent)
-
+#    print 'nodes', nodes
     # Create the remaining graph nodes/edges.
-    for position in range(positions):
+    cdef int position
+    cdef int node_label1
+    cdef object node, next_node, prev_node
 
+    for position in range(positions):
+        #print 'Position', position
         # Find all possible edges for each possible new node and add them
         # to n2e.
         n2e = defaultdict(set)
         for node_label1 in node_labels:
             for node in nodes:
-
+                #print 'nodes', node_label1, node
                 # This edge does not result in a legal path.
-                if node_label1 in node.labels:
-                    continue
+                if node_label1 not in node.idxs:
+                    
 
-                s = SentenceNGram(tuple([node_label1]) + node.labels[:-1],
-                                  position)
-                n2e[s].add(node)
+                    s = SentenceNGram(tuple([node_label1]) + node.idxs[:-1],
+                                      position)
+                    #print 'new node', s
+                    n2e[s].add(node)
 
         # Create the new nodes and edges.
         for next_node in n2e.keys():
             node_edge = []
             for prev_node in n2e[next_node]:
-                transition = Transition(tuple([next_node.labels[0]]) + \
-                                        prev_node.labels, position)
+                transition = Transition(tuple([next_node.idxs[0]]) + \
+                                        prev_node.idxs, position)
                 node_edge.append((prev_node, transition))
+                #print 'making trans', transition
 
             c[next_node] = c.sum([c[prev_node] * c.sr(transition)
                                   for prev_node, transition in node_edge])
-
-        # Replace nodes with current position nodes.
+#
+#        # Replace nodes with current position nodes.
         nodes = n2e.keys()
 
     # Create the final END node.
-    end_node = SentenceNGram(tuple([u'END']), positions)
+    end_node = SentenceNGram(tuple([positions]), positions)
     c[end_node] = \
-        c.sum([c[node] * c.sr(Transition(tuple([u'END']) + node.labels,
+        c.sum([c[node] * c.sr(Transition(tuple([positions]) + node.idxs,
                                          positions))
                for node in nodes])
 
@@ -181,7 +199,7 @@ def recover_order(transition_set):
     """
     transitions = list(transition_set)
     ordered_trans = []
-    curr_tok = u'START'
+    curr_tok = -1
 
     # If pop_cntr exceeds the number of transitions, the set is not
     # a valid path in the graph, return an empty list.
@@ -189,9 +207,9 @@ def recover_order(transition_set):
     while len(transitions) > 0:
         t = transitions.pop(0)
         pop_cntr += 1
-        if t.labels[1] == curr_tok:
+        if t.idxs[1] == curr_tok:
             ordered_trans.append(t)
-            curr_tok = t.labels[0]
+            curr_tok = t.to
             pop_cntr = 0
         else:
             transitions.append(t)

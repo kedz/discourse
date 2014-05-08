@@ -4,6 +4,7 @@ import textwrap
 import itertools
 from collections import defaultdict
 import nltk
+from cpython cimport bool
 
 cdef lattice.Transition Transition
 
@@ -33,8 +34,18 @@ cdef class NGramDiscourseInstance:
 
     """
 
+    cdef public object doc
+    cdef public int nsents
+    cdef public dict active_feat
+    cdef public dict entity_counts
+    cdef public dict _f_cache
+    cdef object _topic_map
+    cdef public int ngram
+    cdef public _use_cache 
+    cdef list _verb_cache, _syntax_cache, _fw_cache
+    cdef public dict _local_edge_feature_cache
 
-    def __init__(self, doc, features=None, topic_map=None,
+    def __cinit__(self, doc, features=None, topic_map=None,
                  ngram=3, use_cache=False):
         self.doc = doc
         self.nsents = len(doc.sents)
@@ -48,6 +59,8 @@ cdef class NGramDiscourseInstance:
         self._verb_cache = [None for s in doc.sents]
         self._syntax_cache = [[None, None, None] for s in doc.sents]
         self._fw_cache = [None for s in doc.sents]
+
+        self._local_edge_feature_cache = {}
 
     def _build_entity_counts(self, doc):
         """ Build a dict of occurrence counts of noun tokens in this
@@ -88,7 +101,7 @@ cdef class NGramDiscourseInstance:
         return hypergraph
 
 
-    cdef feature_map(self, lattice.Transition transition):
+    cpdef feature_map(self, lattice.Transition transition):
         """ Build the feature map for this transition (i.e. graph
         edge). If we have already constructed this map, return the
         map in _f_cache.
@@ -106,20 +119,11 @@ cdef class NGramDiscourseInstance:
             A dict mapping feature names to feature values for
             graph edge that corresponds to transition.
         """
-
         
-
-        # Check the cache if we have already created this transition's
-        # feature map, otherwise create a new one.
-
-        if transition in self._f_cache and self._use_cache is True:
-            return self._f_cache[transition]
-
-        else:
-
-            # Create an empty feature map for this transition.
+        cdef tuple idxs = transition.idxs
+        cdef dict fmap, pfmap
+        if idxs not in self._local_edge_feature_cache:
             fmap = {}
-
                 ### Call each feature function if active. ###
             if self.active_feat.get('role_match', False):
                 self._f_role_match(fmap, transition)
@@ -145,16 +149,7 @@ cdef class NGramDiscourseInstance:
 #
             if self.active_feat.get('verbs', False):
                 self._f_verbs(fmap, transition)
-            
-#
-#            
-#            if self.active_feat.get('relative_position', False):
-#                self._f_relative_position(fmap, transition)
-#
-#            
-#            if self.active_feat.get('sentiment', False):
-#                self._f_sentiment(fmap, transition)
-#
+           
             if self.active_feat.get('topics_rewrite_20', False):
                 self._f_topics_rewrite(fmap, transition, '20')
             if self.active_feat.get('topics_rewrite_40', False):
@@ -166,16 +161,34 @@ cdef class NGramDiscourseInstance:
             if self.active_feat.get('topics_rewrite_100', False):
                 self._f_topics_rewrite(fmap, transition, '100')
                 
-            if self.active_feat.get(u'debug', False):
-                self._f_debug(fmap, transition)
 
             if self.active_feat.get('topics', False):
                 self._f_topics(fmap, transition)
-            if self.active_feat.get('relative_position_qtr', False):
-                self._f_relative_position_qtr(fmap, transition)
-            if self._use_cache is True:
-                self._f_cache[transition] = fmap
-            return fmap
+            self._local_edge_feature_cache[idxs] = fmap
+        fmap = self._local_edge_feature_cache[idxs]
+        
+        
+        if self.active_feat.get(u'debug', False):
+            self._f_debug(fmap, transition)
+
+        if self.active_feat.get('relative_position_qtr', False):
+            pfmap = {}
+            self._f_relative_position_qtr(fmap, pfmap, transition)
+            return dict(fmap.items() + pfmap.items()) 
+        return fmap
+        # Check the cache if we have already created this transition's
+        # feature map, otherwise create a new one.
+
+#        if transition in self._f_cache and self._use_cache is True:
+#            return self._f_cache[transition]
+
+#        else:
+#
+#            if self.active_feat.get('relative_position_qtr', False):
+#                self._f_relative_position_qtr(fmap, transition)
+#            if self._use_cache is True:
+#                self._f_cache[transition] = fmap
+#            return fmap
 
     def _f_first_word(self, fmap, transition):
         """ Marks the sequence first words of the sentences selected
@@ -193,14 +206,15 @@ cdef class NGramDiscourseInstance:
             extracts features.
         """
 
-        nsents = len(self.doc.sents)
         feature_combs = [self.extract_fws(idx) 
                          for idx in transition.idxs[::-1]]
-        null_p = tuple([u'__']) * len(feature_combs)
+        null_p = tuple([u'_']) * len(feature_combs)
+        null_p1 = tuple([u'S']) * (len(feature_combs) - 1) + tuple([u'_'])
+        null_p2 = tuple([u'_']) * (len(feature_combs) - 1) + tuple([u'E'])
 
         for p in itertools.product(*feature_combs):
             p = tuple(p) 
-            if p == null_p:
+            if p == null_p or p == null_p1 or p == null_p2:
                 continue
             
             # Mark the feature
@@ -209,19 +223,19 @@ cdef class NGramDiscourseInstance:
 
     cdef extract_fws(self, int idx):
         if idx == -1:
-            return ['START']
+            return ['S']
         elif idx == self.nsents:
-            return ['END']
+            return ['E']
         else:
             if self._fw_cache[idx] is None:
                 t = self.doc.sents[idx].tokens[0]
                 if t.ne == 'O':
-                    self._fw_cache[idx] = [t.lem.lower(), u'__']
+                    self._fw_cache[idx] = [t.lem.lower(), u'_']
                 else:
-                    self._fw_cache[idx] = [t.lem.lower(), t.ne, u'__']
+                    self._fw_cache[idx] = [t.lem.lower(), t.ne, u'_']
             return self._fw_cache[idx] 
 
-    cdef _f_verbs(self, dict fmap, lattice.Transition transition):
+    cpdef _f_verbs(self, dict fmap, lattice.Transition transition):
         
         nsents = len(self.doc)
                 
@@ -252,8 +266,12 @@ cdef class NGramDiscourseInstance:
                 self._verb_cache[idx] = set(verbs).union(set(['__']))
             return self._verb_cache[idx]
    
-    cdef _f_relative_position_qtr(self, dict fmap,
+    cpdef _f_relative_position_qtr(self, dict fmap, dict pfmap,
                                   lattice.Transition transition):
+
+        cdef int nsents
+        cdef float per
+         
         nsents = len(self.doc)
         per = transition.position / float(nsents)
         if per <= .25:
@@ -265,17 +283,14 @@ cdef class NGramDiscourseInstance:
         else:
             qtr = u'4Q'
         new_feats = []
-        for feat, value in fmap.items():
-            new_feats.append((u'({} QTR) {}'.format(qtr, feat), value))  
-        for feat, value in new_feats:
-            fmap[feat] = value        
+        for feat, value in fmap.iteritems():
+            pfmap[u'({} QTR) {}'.format(qtr, feat)] = value
 
 
     def _f_role_match(self, fmap, transition):
 
         sent_ent_roles = []
-        for label in transition.labels[::-1]:
-            idx = lattice.s2i(label, end=self.nsents)
+        for idx in transition.idxs[::-1]:
             if idx == -1:         
                 sent_ent_roles.append(defaultdict(lambda: ['START']))
             elif idx == self.nsents:
@@ -375,7 +390,7 @@ cdef class NGramDiscourseInstance:
 #        return s_ents
 
 
-    cdef _f_syntax_lev(self, dict fmap, lattice.Transition transition, 
+    cpdef _f_syntax_lev(self, dict fmap, lattice.Transition transition, 
                        int depth):
         """ Marks the non-terminal sequence transition in the
         feature map. E.g. S , NP VP . ---> NP VP .
@@ -446,7 +461,7 @@ cdef class NGramDiscourseInstance:
         else:
             return u''      
 
-    cdef _f_topics(self, dict fmap, lattice.Transition transition):
+    cpdef _f_topics(self, dict fmap, lattice.Transition transition):
 
         # Get topic granularities        
         grans = self._topic_map[0].keys()
@@ -471,7 +486,7 @@ cdef class NGramDiscourseInstance:
                 fstr = u'Topics ({}): {}'.format(gran, u' --> '.join(p))
                 fmap[fstr] = 1
 
-    cdef _f_topics_rewrite(self, dict fmap, lattice.Transition transition,
+    cpdef _f_topics_rewrite(self, dict fmap, lattice.Transition transition,
                            object granularity):
 
         idx = transition.idxs[0]
@@ -487,16 +502,16 @@ cdef class NGramDiscourseInstance:
         s2i = lattice.s2i
         nsents = len(self.doc.sents)
         correct = True
-        for i, label in enumerate(transition.labels[:-1]):
 
-            head = s2i(label, end=nsents)
-            tail = s2i(transition.labels[i + 1], end=nsents)
+        for i, head in enumerate(transition.idxs[:-1]):
+
+            tail = transition.idxs[i + 1]
             if tail == -1 and head == -1:
                 continue
             if tail + 1 != head :
                 correct = False
                 break
-        if transition.position != s2i(transition.labels[0], end=nsents):
+        if transition.position != transition.to:
             correct = False
         
         if correct:
@@ -508,10 +523,9 @@ cdef class NGramDiscourseInstance:
         
         ngrams = self.ngram
         nsents = len(self.doc.sents)
-        labels = ['START'] * (ngrams - 1) + ['s-{}'.format(i) 
-                                             for i in range(nsents)]
+        labels = [-1] * (ngrams - 1) + [i for i in range(nsents)]
 
-        labels += ['END']
+        labels += [nsents]
         nlabels = len(labels)
         gold = []
 
@@ -536,7 +550,8 @@ cdef class NGramDiscourseInstance:
         txts = []
         wrapper = textwrap.TextWrapper(subsequent_indent=u'        ')
         for i in indices:
-            txts.append(u'({})  {}'.format(i, unicode(self.doc[i])))
+            if i != self.nsents:
+                txts.append(u'({})  {}'.format(i, unicode(self.doc[i])))
         wrapped_txt = [wrapper.fill(txt) for txt in txts]
 
         return u'\n'.join(wrapped_txt)
@@ -550,9 +565,8 @@ cdef class NGramDiscourseInstance:
             discourse.hypergraph.Transition objects.
         """
         ord_trans = lattice.recover_order(transitions)
-        indices = [lattice.s2i(t.labels[0])
-                   for t in ord_trans
-                   if t.labels[0] != 'END']
+        indices = [t.to
+                   for t in ord_trans]
         return self.indices2str(indices)
 
     def hypergraph(self):

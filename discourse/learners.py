@@ -38,7 +38,7 @@ class DiscourseSequenceModel(model.DynamicProgrammingModel):
     def constraints(self, discourse_model, hypergraph):
         nsents = len(discourse_model.doc.sents)
         constraints = cons.Constraints(hypergraph,
-                                [('s-{}'.format(i), -1)
+                                [(i, -1)
                                  for i in range(nsents)])
         g = [lattice.build_constraints(edge.label)
              for edge in hypergraph.edges]
@@ -195,13 +195,13 @@ class DiscourseSequenceModel(model.DynamicProgrammingModel):
         total_loss = 0
         end_pos = len(y) - 1
         for y_i_hat in y_hat:
-            if s2i(y_i_hat.labels[0], end=end_pos) != y_i_hat.position:
+            if y_i_hat.to != y_i_hat.position:
                 l = 1
             else:
                 l = 0
             if verbose:
                 print 'Gold:', y_i_hat.position,
-                print 'Pred:', y_i_hat.labels[0], 'Loss: {}'.format(l)
+                print 'Pred:', y_i_hat.to, 'Loss: {}'.format(l)
             total_loss += l
 
         if verbose:
@@ -209,7 +209,6 @@ class DiscourseSequenceModel(model.DynamicProgrammingModel):
         return total_loss
 
     def hamming_edge_loss(self, y, y_hat, verbose=False):
-        s2i = lattice.s2i
         total_loss = 0
         y_set = set(y)
         for y_i_hat in y_hat:
@@ -386,6 +385,7 @@ class Learner:
             import gc
             for x in trainX:
                 x._f_cache = {}
+                x._local_edge_feature_cache = {}
             gc.collect()
                 
 

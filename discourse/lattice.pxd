@@ -1,6 +1,10 @@
 cdef class Transition:
-    cdef int to
-    cdef list labels
-    cdef list idxs
-    cdef int position
+    cdef public int to
+    cdef public tuple idxs
+    cdef public int position
 
+#cdef class SentenceNGram:
+#    cdef public tuple idxs
+#    cdef public int position 
+
+    

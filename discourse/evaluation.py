@@ -368,7 +368,7 @@ def kendalls_tau(transitions):
         import sys
         sys.exit()
     # Get list sentence indices implied by the transition set.
-    indices = [s2i(t.labels[0]) for t in ordered_trans[:-1]]
+    indices = [t.to for t in ordered_trans[:-1]]
     # Get gold indices.
     gold = [i for i in range(len(indices))]
     # Compute Kendall's tau for these two sequences.
@@ -411,12 +411,12 @@ def bigram_acc(transitions):
     """
     ntrans = len(transitions)
     # Get predicted bigrams.
-    pred_bg = set([(s2i(t.labels[1]), s2i(t.labels[0], end='end'))
+    pred_bg = set([(t.idxs[1], t.to)
                    for t in recover_order(transitions)])
 
     # Create gold bigrams.
     gold = set([(i, i+1) for i in range(-1, ntrans - 2)])
-    gold.add((ntrans - 2, 'end'))
+    gold.add((ntrans - 2, ntrans - 1))
 
     # If either sets are empty return None.
     if len(pred_bg) == 0 or len(gold) == 0:
@@ -447,8 +447,7 @@ def oso_acc(transitions):
 
     ntrans = len(transitions)
     # Get predicted bigrams.
-    pred = [s2i(t.labels[0], end=ntrans-1)
-               for t in recover_order(transitions)]
+    pred = [t.to for t in recover_order(transitions)]
     if tuple(pred) == tuple([i for i in range(ntrans)]):
         return 1
     else:
