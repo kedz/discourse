@@ -235,8 +235,8 @@ Let $\Fwords$ be the set of sentence first words extracted from the training dat
 \end{align*}
 where $first(u)$ returns the first word of sentence $u$ along with backoff features for each first word $r \in \Fwords$,
 \begin{align*}
-\phi_{\texttt{fw}_{\rightarrow,r}}(x, (i, u, v)) = & \; 1\{ r \in first(v)\} \\
-\phi_{\texttt{fw}_{r,\rightarrow}}(x, (i, u, v)) = & \; 1\{ r \in first(u)\}. \\
+\phi_{\texttt{fw}_{\rightarrow,r}}(x, (i, u, v)) = & \; 1\{ r = first(v)\} \\
+\phi_{\texttt{fw}_{r,\rightarrow}}(x, (i, u, v)) = & \; 1\{ r = first(u)\}. \\
 \end{align*}
 
 
