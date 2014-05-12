@@ -57,20 +57,29 @@
   \end{tabular}
 \end{table*}
 
-
 \begin{table*}
   \centering
-  \begin{tabular}{|l|ll|}
+  \begin{tabular}{|l|lll|lll|}
     \hline
-    & \multicolumn{2}{c|}{NTSB} \\
-    & Tau & Bleu & Speed & \\
+    & \multicolumn{3}{c|}{NTSB} &\multicolumn{3}{c|}{APWS} \\
+    &Dev-$\tau$ & $\tau$ & Bleu &Dev-$\tau$ & $\tau$ & Bleu \\
     \hline
-    Model(Beam) -trigram  & & \\
-    Model(Beam) -  & & \\
-    Model(Beam) -  & & \\
-    Model(Beam) -  & & \\
-    Model(Beam) -  & & \\
-    Model(Beam) -  & & \\
+    beam-bigram fw-vbz-sx &0.43 &0.37 & & 0.53 & 0.40 & \\
+    beam-bigram fw-vbz-sx-posq &0.41 &0.41 & & 0.65 & 0.45 & \\
+    beam-bigram fw-vbz-sx-tpc &\textbf{0.60} &\textbf{0.59} & & 0.73 & 0.60 & \\  
+    beam-bigram fw-vbz-sx-posq-trw20 &0.59 &0.59 & & 0.75 & 0.65 & \\
+    beam-bigram fw-vbz-sx-posq-tpc  &0.56 &0.56 & & \textbf{0.75}  & \textbf{0.66} & \\
+    beam-bigram fw-vbz-sx-tpc-trw20 &0.59 &0.59 & & 0.74 & 0.64 & \\
+    beam-bigram fw-vbz-sx-posq-tpc-trw20 &0.60 &0.56 & &  0.73  & 0.63 & \\
+    \hline 
+    beam-bigram vbz-posq-tpc-trw20 &0.55 &0.55 & & 0.67 & 0.58 & \\ 
+    beam-bigram sx-posq-tpc-trw20 &0.56 &0.52 & & 0.73 & 0.60 & \\
+    beam-bigram fw-posq-tpc-trw20 &\textbf{0.59} &\textbf{0.53} & & \textbf{0.77} & \textbf{0.66} & \\
+    \hline
+    beam-bigram vbz-sx-posq-tpc-trw20 &0.57 &0.55 & & 0.68 &0.62 & \\
+    beam-bigram fw-vbz-posq-tpc-trw20 &0.55 &0.59 & & \textbf{0.75} &\textbf{0.66}& \\
+    beam-bigram fw-sx-posq-tpc-trw20  &\textbf{0.57} &\textbf{0.58} & & 0.74 &0.66 & \\
+    \hline 
     \hline
     loss tau \\
     loss bigram \\

@@ -20,8 +20,13 @@
 
 \newcommand{\Ver}{{\cal V}}
 \newcommand{\Edges}{{\cal E}}
-
-
+\newcommand{\Ents}{{\cal E}}
+\newcommand{\Roles}{{\cal D}}
+\newcommand{\Role}{r}
+\newcommand{\Doc}{d}
+\newcommand{\rend}{\rho}
+\newcommand{\Verbs}{\cal V}
+\newcommand{\Fwords}{\cal F}
 %\setlength\titlebox{5cm}
 
 % You can expand the titlebox if you need extra space
@@ -121,7 +126,7 @@ And we define new constraints
 \]    
 
 And we add the constraint 
-\[\Structs = \begin{cases} y\in\Structs' :  & \displaystyle \sum_{i = 1}^n \sum_{u\in \Sents} y(i, u,v)  = 1 \ \  \forall v \in \Sents, \]
+\[\Structs = \begin{cases} y\in\Structs' :  & \displaystyle \sum_{i = 1}^n \sum_{u\in \Sents} y(i, u,v)  = 1 \\  \forall v \in \Sents, \end{cases} \]
 
 
 
@@ -144,28 +149,121 @@ In this section we discuss how to compute the edge weights of the lattice. We wi
 
 \paragraph{Entity-Grid Features}
 
-\newcite{bandl} propose a model of document  coherence using an Entity-Grid model.
+\newcite{bandl} propose a model of document coherence using an Entity-Grid model. Under this model, a document $\Doc$ is an unordered set of $|\Doc|$ sentences. A rendering of a document $\rend$ is an ordering on $d$ with $\rend(i) \in \Enum{|d|}$ for all $i = 1,\ldots,|\Doc|$.
+Each document is also associated with a set of entities $\Ents$ and a set of grammatical roles  $\Roles = \{\texttt{s}, \texttt{o}, \texttt{c}, \texttt{n} \}$.
+Every entity has a role $\Role \in \Roles$ for each sentence, corresponding to its grammatical role in that sentence, either as the subject (\texttt{s}), object (\texttt{o}), any other clausal role (\texttt{c}), or null (\texttt{n}) (i.e. the entity is not present in the sentence).
+The Entity-Grid model takes its name from a visualization of these variables for a given rendering as a $ |\Ents| \times |\Doc|$ matrix where each matrix element $e_{i,j} \in \Roles$ correpsonds to the $i^{th}$ entity's role in sentence $\rend(j)$.
+In practice, we are mainly concerned with the entity role transitions between sentences, i.e. the tuples $(e_{i,j}, e_{i,j+1}) \in \Roles \times \Roles$.
+Different renderings of a document can produce different distributions.
+The probability of the subject to object transition, for example, is computed as 
+\[\displaystyle p_\rend(\texttt{s}, \texttt{o}) = \frac{ \sum_{i=1}^{|\mathcal{E}|} \sum_{j=1}^{|d|-1} 1\{e_{i,j} = \texttt{s}\} 1\{e_{i,j+1} = \texttt{o}\}  }{(|d|-1) \times |\mathcal{E}|} \]
 
+
+In order to rank a rendering $\rend$ by coherence, \cite{bandl} represent it as vector $\Phi(\rend) \in \mathcal{R}^{|\Roles|^2}$ of these transition probabilities.
+
+Since our model is edge factored, we cannot directly compute these transition probabilities. Instead, we use local feature functions $\phi_{\texttt{role}_{r,s}}$ for $r,s \in \Roles$ to compute the role transition counts. Formally, 
+
+\begin{align*}\phi_{\texttt{role}_{r,s}}(x (i, u, v)) =&\; \sum_{e=1}^{|\mathcal{E}|} \left( 1\{role(e,u) = r\} \right. \\
+& \left. \times 1\{role(e, v) = s\} \right)
+\end{align*}
+
+where $role(e,u)$ returns the grammatical role for entity $e$ in sentence $u$.
+Given a valid tour through our instance lattice, the sum of $\phi_{\texttt{role}_{r,s}}$ for all tour edges would be proportional to the probability $p_\rend(r,s)$ under the Entity-Grid model and $\rend$ implied by the tour.
+
+\cite{bandl} introduce several variants to there model, including various salience levels and coreference. Our feature implementation is directly comparabile to their model with 2 levels of salience, history size of 2, syntax, and no co-reference. Co-reference is not easily incorporated into our edge factored model. 
+ 
 % Define Entity-grid model
 
 % Define how the features work for it. 
 
 \paragraph{Sentence Topic Features}
 
+We implement the hidden Markov model (HMM) of \newcite{bandlee} over sentences in our training data. 
+In this setup, we first cluster sentences -- we refer to the resultant clusters as topics. 
+Each topic is associated with a bigram language model constructed from the sentences assigned to the topic. 
+We then treat the topics as hidden states in an HMM. 
+Using the sentence topic assignments as gold topic labelings we obtain maximum likelihood estimates for the state transition parameters. 
+The topic language model score of sentence is its emission parameter under that topic. We run Viterbi-EM until convergence, taking the final topic assignment for all sentences as our topic cluster assignments. 
+The result of this process is a set of topics that are both lexically and positionally related. 
+
+We use a min-link clustering scheme, which requires a similarity metric and a stopping criteria. As in \newcite{bandlee} we use the follwing similary metric,
+
+\begin{align*} \operatorname{sim}(u,v)  = &  \theta_1 \cos_{uni}(u,v) + \theta_2 \cos_{bi}(u,v) \\ 
+& + \theta_3 \cos_{tri}(u,v) \\
+&- 1\{u.half \ne v.half \} 
+\end{align*}
+
+where the first three terms are a convex combination of unigram, bigram, and trigram cosine similarity and the final term is an indicator function that is equal to 1 when the sentences come from different halves of their respective documents.
+For our experiments we set $\theta_1 = ?$, $\theta_2 = ?$, and $\theta_3 = ?$ (These values and similarity metric were taken from the code posted here -- ).
+For the  stopping criteria, we simply stopped when we had obtained $n$ clusters. 
+We performed the above steps for values of $n = 20,40, 60, 80, 100$.
+To map a sentence from the test or development set to a topic we simply take the topic assignment of it's nearest neighbor in the training set, using the above similarity function to find the nearest neighbor.
+
+For each $n$ we create feature functions $\phi_{\texttt{topic}_n}(x, (i,u,v)) = topic_{n, u} \rightarrow topic_{n, v} $, $\phi_{\texttt{to\_topic}_n}(x, (i,u,v)) = topic_{n, v} $, and $\phi_{\texttt{from\_topic}_n}(x, (i,u,v)) = topic_{n, u} $.
+
+
+We create an additional set of features based on the {\em to\_topic} features. First, let the set $\Phi(x, (i, u, v))$ be the set of lexical and syntactic features associated with the edge $y(i,u,v)$.
+For each $\phi_{\texttt{lex/syn}}(x, (i, u, v) \in \Phi(x, (i, u v))$, we concatenate the  {\em to\_topic} feature, yielding $\phi_{\texttt{lex/syn}}(x (i, u, v)) \phi_{\texttt{to\_topic}_n}(x, (i,u,v))$.
+
+
+%Additionally, we create a feature $\phi_{\texttt{to\_topic}_n}(x, (i,u,v)) \phi_{\texttt{lex}}(x (i, u,v)) $ for each lexical feature
+
 
 
 
 \paragraph{Lexical Features}
 
+We emply two lexical co-occurrence features in out model. The first feature set is based on verb co-occurence. Let $\Verbs$ be the set of verbs extracted from the training corpus. For every pair $r,s \in \Verbs$ we create feature functions 
+\begin{align*}
+\phi_{\texttt{verb}_{r,s}}(x, (i, u, v)) = & \; 1\{ r \in verbs(u) \} \\
+& \times 1\{s \in verbs(v) \}\\
+\end{align*}
+where $verbs(u)$ is the set of verbs in sentence $u$.
+We create additional backoff features for each verb $r \in \Verbs$,
+\begin{align*}
+\phi_{\texttt{verb}_{\rightarrow,r}}(x, (i, u, v)) = & \; 1\{ r \in verbs(v)\} \\
+\phi_{\texttt{verb}_{r,\rightarrow}}(x, (i, u, v)) = & \; 1\{ r \in verbs(u)\}. \\
+\end{align*}
+
+
+The second set of features employ the co-occurence of sentence first words.
+Let $\Fwords$ be the set of sentence first words extracted from the training data.
+ We similary define feature functions for all pairs $r,s \in \Fwords$ where
+\begin{align*}
+\phi_{\texttt{fw}_{r,s}}(x, (i, u, v)) = & \; 1\{ r = first(u) \} \\
+& \times 1\{s = first(v) \}\\
+\end{align*}
+where $first(u)$ returns the first word of sentence $u$ along with backoff features for each first word $r \in \Fwords$,
+\begin{align*}
+\phi_{\texttt{fw}_{\rightarrow,r}}(x, (i, u, v)) = & \; 1\{ r \in first(v)\} \\
+\phi_{\texttt{fw}_{r,\rightarrow}}(x, (i, u, v)) = & \; 1\{ r \in first(u)\}. \\
+\end{align*}
+
+
+
 \paragraph{Syntactic Features}
 
+\newcite{landn} have found syntactic patterns to be an effective predictor of coherence. For each sentence we have an associated syntax tree. Given the orderd set of sentences associated with an edge, we take as a feature the concatenation of the nonterminal productions of each sentence's syntax tree at given height $h$. Given an edge from sentence $u$ to $v$, we create additional backoff features $* \rightarrow p_{h,v}$ and $p_{h,v} \rightarrow *$, where $p_{h,v}$ and $p_{h,v} $ are nonterminal productions at height $h$ for sentences $u$ and $v$ respectively.
 
-   
 
+
+\paragraph{Relative Position Features}
+
+Different portions of a document may exhibit different distributions of features. To exploit this, we create additional features, based on the edge position in the lattice. 
+Let $\Phi(x, (i, u, v))$ be the set of all previous features for the edge $y(i, u, v)$. For each $\phi^\prime \in \Phi(x, (i, u, v))$ we create additional features
+\begin{align*}
+\phi_{\texttt{quarter1}}(x, (i,u,v)) & = quarter(x,1,i)\times\phi^\prime(x, (i,u,v))\\ 
+\phi_{\texttt{quarter2}}(x, (i,u,v)) & = quarter(x,2,i)\times\phi^\prime(x, (i,u,v))\\ 
+\phi_{\texttt{quarter3}}(x, (i,u,v)) & = quarter(x,3,i)\times\phi^\prime(x, (i,u,v))\\ 
+\phi_{\texttt{quarter4}}(x, (i,u,v)) & = quarter(x,4,i)\times\phi^\prime(x, (i,u,v))\\ 
+\end{align*}
+
+where 
+\[quarter(x, n, i) = \begin{cases} 1 &\parbox[t]{.3\textwidth}{ if position $i$  is in the $n^{th}$ quarter of document $x$}\\ 0 & \textrm{otherwise}\end{cases}\]
 
 % Topic features
 
-% Entity-grid discriminative
+% Entity-grid discriminative\Phi(x, (i, u, v))
 
 
 \section{Structured Training}
